@@ -16,5 +16,14 @@
     let eleA = document.getElementsByTagName("a")[0]
     eleA.innerText = "구글바로가기"
     eleA.href="https://www.google.com"
+    let eleImg = document.getElementsByTagName("img")[0]
+    eleImg.addEventListener("mouseover",function(){
+        this.style.width=parseInt(this.style.width)+50+"px"
+        this.style.height=parseInt(this.style.height)+50+"px"
+    })
+    eleImg.addEventListener("mouseleave",function(){
+        this.style.width=parseInt(this.style.width)-50+"px"
+        this.style.height=parseInt(this.style.height)-50+"px"
+    })
 </script>
 </html>
