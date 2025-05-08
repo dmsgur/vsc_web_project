@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        .d{width:120px;height:120px;border:1px solid red;float:right}
+        #d1{background: yellow;}
+        #d2{background: blue;}
+        #d3{background: green;}
+        #d4{background: lightcyan;}
+        #d5{background: lightsalmon;}
+        
+    </style>
 </head>
 <body>
     <a href="https://www.naver.com">네이버 바로가기</a>
@@ -11,6 +20,14 @@
     <div style="width:200px;height:200px;background-size: contain;
     background-repeat: no-repeat;
     background-image:url('./P.t.altaica_Tomak_Male.jpg')"></div>
+    <div></div>
+    <div class="d" id="d1"></div>
+    <div class="d" id="d2"></div>
+    <div class="d" id="d3"></div>
+    <div class="d" id="d4"></div>
+    <div class="d aa" id="d5"></div>
+    <div style="clear:both"></div>
+    <div style="background:darkkhaki" style="clear:both">안녕</div>
 </body>
 <script>
     let eleA = document.getElementsByTagName("a")[0]
@@ -35,6 +52,9 @@
     })
     console.log(eleDiv)
     // eleDiv.onclick=function(){}
+    let aaa = function sum(a,b){return a+b}
+    console.log(aaa(3,5))
+    // typescript
     
 
 </script>
