@@ -9,12 +9,23 @@ $(async ()=>{
     //          - body:보낼데이터
     // js 동기화 작동 async 함수 레벨 - await 호출메소드
     const conn_url = `https://api.bithumb.com/public/ticker/ALL_KRW`
+    const conn_han = `https://api.bithumb.com/v1/market/all`
+
+    let conn_name = await fetch(conn_han,{method:"get"}).catch((e)=>console.log(e))
+    let data_name = await conn_name.json()
+    console.log(data_name)
+    data_name = data_name.filter((obj)=>{return !obj.market.includes("BTC-")})
     let conn = await fetch(conn_url,{method:"get"}).catch((e)=>console.log(e))
     let data = await conn.json()
+    
+    
     if(data.status=="0000"){
-        msgbox.text("데이터 수신 완료")
         $("#marker").css("background","green")
-        sprayData(data.data)
+        let receiveTime = new Date(parseInt(data.data.date))
+        msgbox.text("데이터 수신 완료 수신시간:"+receiveTime.toLocaleString("kr"))
+        delete data.data.date
+        
+        sprayData(data.data,data_name)
     }else{
         msgbox.text("데이터 수신 오류 코드: "+data.status)
         $("#marker").css("background","red")
@@ -22,9 +33,28 @@ $(async ()=>{
     
 })
 // { BTC: {…}, ETH: {…}, ETC: {…}, … }
-function sprayData(data){
+function sprayData(data,data_name){
+    console.log(data)
     names = Object.keys(data)
-    console.log(names)
+    for (unit of names){
+        let chgrat = parseFloat(data[unit].fluctate_rate_24H)
+        let cobj =data_name.find((obj)=>obj.market=="KRW-"+unit)
+        let inHtml = `<div class="unitbox">
+                    <p class="cname">${unit}</p>
+                    <p class="tailname"><span>${cobj.korean_name}</span>(<span style="color:blue">${cobj.english_name}</span>)</p>
+                    <div>
+                        <p><span class="field">최고가</span> <span class="price">${data[unit].max_price}</span></p>
+                        <p><span class="field">현재가</span> <span class="price">${data[unit].closing_price}</span></p>
+                        <p><span class="field">최저가</span> <span class="price">${data[unit].min_price}</span></p>
+                    </div>
+                    <p style='font-size:0.8rem;text-align:center'><span>시작가 ${data[unit].opening_price}</span><span style="color:${chgrat>0?"red":"green"}"> 변동율 ${data[unit].fluctate_rate_24H} %</span></p>
+                    <p class="bar"></p>
+                </div>`
+        $("#contain").append(inHtml)
+    }
+    
+    
+    //0: Object { market: "KRW-BTC", korean_name: "비트코인", english_name: "Bitcoin" }
     // console.log(data[0])
     // console.log(data.keys())
 }
