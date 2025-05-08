@@ -25,5 +25,15 @@
         this.style.width=parseInt(this.style.width)-50+"px"
         this.style.height=parseInt(this.style.height)-50+"px"
     })
+    let eleDiv = document.getElementsByTagName("div")[0]
+    eleDiv.addEventListener("click",function(){
+        if(this.style.backgroundImage.includes("altaica_Tomak_Male")){
+            this.style.backgroundImage="url('./cat.webp')"
+        }else{
+            this.style.backgroundImage="url('./P.t.altaica_Tomak_Male.jpg')" 
+        }
+    })
+    
+
 </script>
 </html>
