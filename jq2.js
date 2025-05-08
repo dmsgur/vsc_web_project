@@ -9,15 +9,25 @@ $(async ()=>{
     //          - body:보낼데이터
     // js 동기화 작동 async 함수 레벨 - await 호출메소드
     const conn_url = `https://api.bithumb.com/public/ticker/ALL_KRW`
-    conn = await fetch(conn_url,{method:"get"}).catch((e)=>console.log(e))
-    data = await conn.json()
+    let conn = await fetch(conn_url,{method:"get"}).catch((e)=>console.log(e))
+    let data = await conn.json()
     if(data.status=="0000"){
         msgbox.text("데이터 수신 완료")
+        $("#marker").css("background","green")
+        sprayData(data.data)
     }else{
         msgbox.text("데이터 수신 오류 코드: "+data.status)
+        $("#marker").css("background","red")
     }
     
 })
+// { BTC: {…}, ETH: {…}, ETC: {…}, … }
+function sprayData(data){
+    names = Object.keys(data)
+    console.log(names)
+    // console.log(data[0])
+    // console.log(data.keys())
+}
 // 함수 선언
 // function 함수이름(){구현로직}
 // 이름없는 무명함수 화살표함수 ()=>{}
