@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        //jQuery()
+        $(function(){
+            $("body").html("<a href='https://www.naver.com'>네이버가기</a>")
+            $("body").append("<div style='width:100px;height:100px;border:1px solid black'></div>")
+            for(let i=0;i<1000;i++){
+                let inHtml = `<div style='float:left;width:20px;height:20px;
+                background:rgb(${parseInt(Math.random()*256)},
+                ${parseInt(Math.random()*256)},${parseInt(Math.random()*256)})'></div>`
+                $(inHtml).appendTo("body").on("click",function(){
+                    $(this).remove()
+                })
+                //$("body").append(inHtml)
+            }
+        })
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
