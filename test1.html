@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        div{width:100px;height:100px;position:absolute}
+    </style>
+    
+</head>
+<body>
+    <div style="background:red;left:10px;top:10px"></div>
+    <div style="background:blue;left:20px;top:20px"></div>
+    <div id="ne" style="background:yellow;left:30px;top:30px">
+        <div style="background:orange;width:10px;height:10px"></div>
+    </div>
+</body>
+<script>
+    let ele = document.getElementById("ne");
+    let sw = false
+    setInterval(function(){
+        if(!sw){
+            sw=window.innerWidth<parseInt(ele.style.left)
+        }
+        if(sw){
+            ele.style.left=parseInt(ele.style.left)-5+"px"
+            ele.style.backgroundColor=(parseInt(ele.style.left)%2==0?"red":"yellow")
+        }else{
+            ele.style.left=parseInt(ele.style.left)+5+"px"
+            ele.style.backgroundColor=(parseInt(ele.style.left)%2==0?"red":"yellow")
+        }
+    },parseInt(Math.random()*1000))
+
+
+</script>
+</html>
