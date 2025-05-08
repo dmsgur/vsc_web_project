@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div></div>
+    <div></div>
+    <div></div>
+</body>
+<script>
+    let content_arr = ["언제나 밝은 자바스크립트!",
+        "<p>엘리먼트를 자바스크립트를 이용하여 삽입하기</p>"+
+        "<p>여러줄 입력이 가능합니다.</p>",
+        "누르면 엘리먼트가 사라집니다.",
+    ]
+    let darr = document.getElementsByTagName("div")
+    for(let i=0;i<darr.length;i++){
+        darr[i].style.width="120px"
+        darr[i].style.height="120px"
+        darr[i].innerHTML=content_arr[i];
+        darr[i].addEventListener("click",function(){
+            this.style.display="none"
+        })
+    }
+</script>
+</html>
