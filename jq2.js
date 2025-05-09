@@ -38,17 +38,25 @@ function sprayData(data,data_name){
     names = Object.keys(data)
     for (unit of names){
         let chgrat = parseFloat(data[unit].fluctate_rate_24H)
+        let color = "red"
+        if(chgrat<0){color="green"}
+        let alpa = (chgrat/50)
         let cobj =data_name.find((obj)=>obj.market=="KRW-"+unit)
+        //.tailname .cname
+        //50% 기준으로 bar 크기
+        let barsize = chgrat*2
         let inHtml = `<div class="unitbox">
-                    <p class="cname">${unit}</p>
-                    <p class="tailname"><span>${cobj.korean_name}</span>(<span style="color:blue">${cobj.english_name}</span>)</p>
+                    <p class="cname" style='background:${color};opacity:${alpa}'></p>
+                    <span class="recontent mtitle">${unit}</span>
+                    <p class="tailname" style='background:${color};opacity:${alpa}'></p>
+                    <p class="mcontain recontent"><span class="mleft">${cobj.korean_name}</span><span style="color:blue" class="mright">(${cobj.english_name})</span></p>
                     <div>
-                        <p><span class="field">최고가</span> <span class="price">${data[unit].max_price}</span></p>
-                        <p><span class="field">현재가</span> <span class="price">${data[unit].closing_price}</span></p>
-                        <p><span class="field">최저가</span> <span class="price">${data[unit].min_price}</span></p>
+                        <p><span class="field">최고가</span> <span class="price">${parseFloat(data[unit].max_price).toLocaleString("ko-KR")}</span></p>
+                        <p><span class="field">현재가</span> <span class="price">${parseFloat(data[unit].closing_price).toLocaleString("ko-KR")}</span></p>
+                        <p><span class="field">최저가</span> <span class="price">${parseFloat(data[unit].min_price).toLocaleString("ko-KR")}</span></p>
                     </div>
-                    <p style='font-size:0.8rem;text-align:center'><span>시작가 ${data[unit].opening_price}</span><span style="color:${chgrat>0?"red":"green"}"> 변동율 ${data[unit].fluctate_rate_24H} %</span></p>
-                    <p class="bar"></p>
+                    <p style='font-size:0.8rem;text-align:center'><span>시작가 ${parseFloat(data[unit].opening_price).toLocaleString("ko-KR")}</span><span style="color:${chgrat>0?"red":"green"}"> 변동율 ${data[unit].fluctate_rate_24H} %</span></p>
+                    <p class="bar" style="float:${barsize<0?"right":"left"};width:${Math.abs(barsize)}%;height:0.2rem;background:${color}"></p>
                 </div>`
         $("#contain").append(inHtml)
     }
