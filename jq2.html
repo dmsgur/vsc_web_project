@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0&icon_names=close" />
     <link href="./jq2.css" rel="stylesheet" type="text/css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="./jq2.js"></script>
@@ -27,8 +28,13 @@
     <div id="contain"></div>
     <div id="cover" style="display:none"></div>
     <div id="analBtn" style="display:none">
-        <h1 style="width:50rem;margin:auto;border:1px solid black;margin-top:20vh"></h1>
-        <div id="btncontain" coinname="" analtime="">
+        <span class="material-symbols-outlined" id="closebtn"
+            style="display:inline-block;position:fixed;top:2rem;right:2rem;font-size:3rem;
+            cursor: pointer;">
+            close
+        </span>
+        <h1 style="background:seashell;width:50rem;margin:auto;border:1px solid black;margin-top:20vh"></h1>
+        <div id="btncontain">
             <button> 시계열회귀분석 [LSTM] </button>
             <button> 합성곱회귀분석 [Conv1D] </button>
         </div>

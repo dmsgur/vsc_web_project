@@ -3,8 +3,9 @@ var dataArr;
 var data_name;
 var filterArr;
 $(async ()=>{
-    $("#cover").on("click",function(){
-        $(this).css("display","none")
+    $("#closebtn").on("click",function(){
+        $("#cover").css("display","none")
+        $("#analBtn").css("display","none")
     })
     $("#searchname").on("keypress",(e)=>{
         if(e.keyCode==13){
