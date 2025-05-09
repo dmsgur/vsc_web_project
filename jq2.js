@@ -3,6 +3,13 @@ var dataArr;
 var data_name;
 var filterArr;
 $(async ()=>{
+    $("#lstm_anal,#conv_anal").on("click",function(){
+        let coinname =$(this).attr("coinname")
+        let analtime=""
+        let ele = $(`.unitbox[coinname=${$(this).attr("coinname")}]`)
+        analtime=ele.attr("analtime")
+        console.log(coinname,analtime)
+    })
     $("#closebtn").on("click",function(){
         $("#cover").css("display","none")
         $("#analBtn").css("display","none")
@@ -121,6 +128,8 @@ function sprayData(data,data_name){
             $("#analBtn").css("display","block")
                  .find("h1").text($(this).attr("coinname")+`( ${$(this).attr("hanname")} ) 
                     ${$(this).attr("rat")} %`).css("color",$(this).attr("rat")>0?"red":"green")
+            $("#btncontain #lstm_anal").attr("coinname",$(this).attr("coinname"))
+            $("#btncontain #conv_anal").attr("coinname",$(this).attr("coinname"))
         })
         //$("#contain").append(inHtml)
     }
