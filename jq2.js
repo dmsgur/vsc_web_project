@@ -97,7 +97,7 @@ function sprayData(data,data_name){
         //.tailname .cname
         //50% 기준으로 bar 크기
         let barsize = chgrat*2
-        let inHtml = `<div class="unitbox">
+        let inHtml = `<div class="unitbox" coinname="${unit}" hanname="${cobj.korean_name}" analtime="24h" rat="${chgrat}">
                     <p class="cname" style='background:${color};opacity:${alpa}'></p>
                     <span class="recontent mtitle">${unit}</span>
                     <p class="tailname" style='background:${color};opacity:${alpa}'></p>
@@ -110,10 +110,16 @@ function sprayData(data,data_name){
                     <p style='font-size:0.8rem;text-align:center'><span>시작가 ${parseFloat(data[unit].opening_price).toLocaleString("ko-KR")}</span><span style="color:${chgrat>0?"red":"green"}"> 변동율 ${data[unit].fluctate_rate_24H} %</span></p>
                     <p class="bar" style="border-radius:2px;float:${barsize<0?"right":"left"};width:${Math.abs(barsize)}%;height:0.2rem;background:${color}"></p>
                 </div>`
-        $(inHtml).appendTo("#contain").on("click",()=>{
+        $(inHtml).appendTo("#contain").on("click",function(){
+            console.log($(this))
+            console.log($(this).attr("coinname"))
+            console.log($(this).attr("hanname"))
+            console.log($(this).attr("rat"))
+            console.log($(this).attr("analtime"))            
             $("#cover").css("display","block")
             $("#analBtn").css("display","block")
-                .find("h1").text(unit+`( ${cobj.korean_name} ) ${chgrat} %`).css("color",chgrat>0?"red":"green")
+                 .find("h1").text($(this).attr("coinname")+`( ${$(this).attr("hanname")} ) 
+                    ${$(this).attr("rat")} %`).css("color",$(this).attr("rat")>0?"red":"green")
         })
         //$("#contain").append(inHtml)
     }
