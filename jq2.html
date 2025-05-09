@@ -10,7 +10,18 @@
 </head>
 <body>
     <h1>선형회귀모델을 이용한 가상화폐분석 페이지</h1>
-    <div><span id="marker"></span><p id="message"></p></div>
+    <div><span id="marker"></span><span id="message"></span>
+        <select id="selorder">
+            <option selected> 정렬 선택 하기 </option>
+            <option value="rat_asc">변동율 오름차순정렬</option>
+            <option value="rat_desc">변동율 내림차순정렬</option>
+            <option value="name_asc">이름순 오름차순정렬</option>
+            <option value="name_desc">이름순 내림차순정렬</option>
+            <option value="pri_asc">금액순 오름차순정렬</option>
+            <option value="pri_desc">금액순 오름차순정렬</option>
+        </select> &nbsp;
+        <button id="runorder">실행하기</button>
+    </div>
     <div id="contain"></div>
     
 </body>

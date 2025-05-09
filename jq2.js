@@ -1,5 +1,35 @@
 var msgbox;
+var dataArr;
 $(async ()=>{
+    
+    $("#runorder").on("click",()=>{
+        let entry = Object.entries(dataArr)
+        switch($("#selorder").val()){
+            case "rat_asc":
+                entry.sort((arr,arr1)=>arr[1].fluctate_rate_24H-arr1[1].fluctate_rate_24H)
+                console.log(entry)
+                break;
+            case "rat_desc":
+                entry.sort((arr,arr1)=>arr1[1].fluctate_rate_24H-arr[1].fluctate_rate_24H)
+                console.log(entry)
+                break;
+            case "pri_asc":
+                entry.sort((arr,arr1)=>arr[1].prev_closing_price-arr1[1].prev_closing_price)
+                console.log(entry)
+                break;
+            case "pri_desc":
+                entry.sort((arr,arr1)=>arr1[1].prev_closing_price-arr[1].prev_closing_price)
+                console.log(entry)
+                break;
+            case "name_asc":
+                entry.sort((arr,arr1)=>arr[0]>arr1[0]?1:-1);console.log(entry);break;
+            case "name_desc":
+                entry.sort((arr,arr1)=>arr1[0]>arr[0]?1:-1);console.log(entry);break;
+            default:
+
+            
+        }
+    })
     msgbox = $("#message");
     console.log("제이쿼리작동")
     //https://api.bithumb.com/public/ticker/ALL_{payment_currency}
@@ -24,8 +54,9 @@ $(async ()=>{
         let receiveTime = new Date(parseInt(data.data.date))
         msgbox.text("데이터 수신 완료 수신시간:"+receiveTime.toLocaleString("kr"))
         delete data.data.date
-        
-        sprayData(data.data,data_name)
+        console.log(data.data)
+        dataArr = {...data.data}        
+        sprayData(dataArr,data_name)
     }else{
         msgbox.text("데이터 수신 오류 코드: "+data.status)
         $("#marker").css("background","red")
@@ -34,13 +65,13 @@ $(async ()=>{
 })
 // { BTC: {…}, ETH: {…}, ETC: {…}, … }
 function sprayData(data,data_name){
-    console.log(data)
+    $("#contain").html("")
     names = Object.keys(data)
     for (unit of names){
         let chgrat = parseFloat(data[unit].fluctate_rate_24H)
         let color = "red"
         if(chgrat<0){color="green"}
-        let alpa = (chgrat/50)
+        let alpa = Math.abs(chgrat/50)
         let cobj =data_name.find((obj)=>obj.market=="KRW-"+unit)
         //.tailname .cname
         //50% 기준으로 bar 크기
@@ -56,7 +87,7 @@ function sprayData(data,data_name){
                         <p><span class="field">최저가</span> <span class="price">${parseFloat(data[unit].min_price).toLocaleString("ko-KR")}</span></p>
                     </div>
                     <p style='font-size:0.8rem;text-align:center'><span>시작가 ${parseFloat(data[unit].opening_price).toLocaleString("ko-KR")}</span><span style="color:${chgrat>0?"red":"green"}"> 변동율 ${data[unit].fluctate_rate_24H} %</span></p>
-                    <p class="bar" style="float:${barsize<0?"right":"left"};width:${Math.abs(barsize)}%;height:0.2rem;background:${color}"></p>
+                    <p class="bar" style="border-radius:2px;float:${barsize<0?"right":"left"};width:${Math.abs(barsize)}%;height:0.2rem;background:${color}"></p>
                 </div>`
         $("#contain").append(inHtml)
     }
