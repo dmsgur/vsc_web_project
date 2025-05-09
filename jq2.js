@@ -1,34 +1,55 @@
 var msgbox;
 var dataArr;
+var data_name;
+var filterArr;
 $(async ()=>{
-    
+    $("#cover").on("click",function(){
+        $(this).css("display","none")
+    })
+    $("#searchname").on("keypress",(e)=>{
+        if(e.keyCode==13){
+            $("#searchbtn").trigger("click")
+        }
+    })
+    $("#searchbtn").on("click",()=>{
+        if(!$("#searchname").val()){
+            alert("영문검색어를 입력하세요")
+            return
+        }
+        let searchunit = $("#searchname").val()
+        let entry = Object.entries(dataArr)
+        console.log(entry)
+        entry=entry.filter((unitarr)=>{
+            return unitarr[0].includes(searchunit.toUpperCase())
+        })
+        filterArr=Object.fromEntries(entry)
+        sprayData(filterArr,data_name)
+
+    })
     $("#runorder").on("click",()=>{
         let entry = Object.entries(dataArr)
         switch($("#selorder").val()){
             case "rat_asc":
                 entry.sort((arr,arr1)=>arr[1].fluctate_rate_24H-arr1[1].fluctate_rate_24H)
-                console.log(entry)
                 break;
             case "rat_desc":
                 entry.sort((arr,arr1)=>arr1[1].fluctate_rate_24H-arr[1].fluctate_rate_24H)
-                console.log(entry)
                 break;
             case "pri_asc":
                 entry.sort((arr,arr1)=>arr[1].prev_closing_price-arr1[1].prev_closing_price)
-                console.log(entry)
                 break;
             case "pri_desc":
                 entry.sort((arr,arr1)=>arr1[1].prev_closing_price-arr[1].prev_closing_price)
-                console.log(entry)
                 break;
             case "name_asc":
                 entry.sort((arr,arr1)=>arr[0]>arr1[0]?1:-1);console.log(entry);break;
             case "name_desc":
                 entry.sort((arr,arr1)=>arr1[0]>arr[0]?1:-1);console.log(entry);break;
             default:
-
-            
+                return;            
         }
+        dataArr = Object.fromEntries(entry)
+        sprayData(dataArr,data_name)
     })
     msgbox = $("#message");
     console.log("제이쿼리작동")
@@ -42,7 +63,7 @@ $(async ()=>{
     const conn_han = `https://api.bithumb.com/v1/market/all`
 
     let conn_name = await fetch(conn_han,{method:"get"}).catch((e)=>console.log(e))
-    let data_name = await conn_name.json()
+    data_name = await conn_name.json()
     console.log(data_name)
     data_name = data_name.filter((obj)=>{return !obj.market.includes("BTC-")})
     let conn = await fetch(conn_url,{method:"get"}).catch((e)=>console.log(e))
@@ -89,7 +110,12 @@ function sprayData(data,data_name){
                     <p style='font-size:0.8rem;text-align:center'><span>시작가 ${parseFloat(data[unit].opening_price).toLocaleString("ko-KR")}</span><span style="color:${chgrat>0?"red":"green"}"> 변동율 ${data[unit].fluctate_rate_24H} %</span></p>
                     <p class="bar" style="border-radius:2px;float:${barsize<0?"right":"left"};width:${Math.abs(barsize)}%;height:0.2rem;background:${color}"></p>
                 </div>`
-        $("#contain").append(inHtml)
+        $(inHtml).appendTo("#contain").on("click",()=>{
+            $("#cover").css("display","block")
+            $("#analBtn").css("display","block")
+                .find("h1").text(unit+`( ${cobj.korean_name} ) ${chgrat} %`).css("color",chgrat>0?"red":"green")
+        })
+        //$("#contain").append(inHtml)
     }
     
     

@@ -9,7 +9,7 @@
     <title>AI Front</title>
 </head>
 <body>
-    <h1>선형회귀모델을 이용한 가상화폐분석 페이지</h1>
+    <h1 style="margin:2rem 0">선형회귀모델을 이용한 가상화폐분석 페이지</h1>
     <div><span id="marker"></span><span id="message"></span>
         <select id="selorder">
             <option selected> 정렬 선택 하기 </option>
@@ -18,11 +18,19 @@
             <option value="name_asc">이름순 오름차순정렬</option>
             <option value="name_desc">이름순 내림차순정렬</option>
             <option value="pri_asc">금액순 오름차순정렬</option>
-            <option value="pri_desc">금액순 오름차순정렬</option>
+            <option value="pri_desc">금액순 내림차순정렬</option>
         </select> &nbsp;
-        <button id="runorder">실행하기</button>
+        <button id="runorder" style="padding:0.3rem;margin-right:2rem">실행하기</button> 
+        <input type="text" placeholder="검색할 영문코인명을 입력" id="searchname"/> &nbsp;<button id="searchbtn" style="padding:0.3rem"> 검색 </button>
     </div>
+
     <div id="contain"></div>
+    <div id="cover" style="display:none"></div>
+    <div id="analBtn" style="display:none">
+        <h1 style="width:50rem;margin:auto;border:1px solid black;margin-top:20vh"></h1>
+        <button> 시계열회귀분석 [LSTM] </button>
+        <button> 합성곱회귀분석 [Conv1D] </button>
+    </div>
     
 </body>
 </html>
