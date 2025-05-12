@@ -34,32 +34,37 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
     if type(req_time)==int:
         minutetime=req_time
         req_time="minutes/"+str(req_time)
-        curdatetime = datetime.now().replace(microsecond=0)
-        dt = curdatetime
+    dt = datetime.now().replace(microsecond=0)
     while(True):
+        print("=========")
         #yyyy-MM-dd HH:mm:ss
         params = {"market":"KRW-"+target_name,"to":dt,"count":getcnt}
         result = requests.get(MAIN_URL+req_time,params)
         res = result.json()
         res.reverse()
+        if not res:
+            break
         data_sets.extend(\
-            [o for o in res if o["candle_date_time_kst"] in date_datas])
+            [o for o in res if not o["candle_date_time_kst"] in date_datas])
         #minutes , days, weeks, months
         if req_time=="days":
             dt = dt-timedelta(days=getcnt)
         elif req_time=="months":
-            dt = dt - relativedelta(months=getcnt)
+            dt = dt-relativedelta(months=getcnt)
         elif req_time=="weeks":
-            dt = dt - relativedelta(weeks=getcnt)
+            dt = dt-relativedelta(weeks=getcnt)
         else:
             dt = dt - timedelta(minutes=getcnt*minutetime)
         date_datas.extend([ o["candle_date_time_kst"] for o in res ])
         if len(data_sets)>=getcnt:break
-    return data_sets
+    return data_sets,target_name,req_time
     # requests.get()
     #pass #주소로부터 데이터 수신
 
 if "__main__"==__name__:
     # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
     #receive_data()
-    receive_data(req_time=1)
+    data_sets,target_name,req_time = receive_data(req_time=3,getcnt=1000)
+    #data_sets,target_name,req_time = receive_data(req_time="months",getcnt=500)
+    print("수신된 데이터: 수량",len(data_sets),\
+          " 이름:",target_name," 시간대:",req_time)

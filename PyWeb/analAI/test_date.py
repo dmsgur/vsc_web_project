@@ -9,9 +9,9 @@ ppre_datetime=pre_datetime-timedelta(hours=240)
 print(ppre_datetime)
 pppre_datetime=ppre_datetime-timedelta(minutes=1*10)
 print(pppre_datetime)
-pre_week = pppre_datetime-relativedelta(weeks=1)
+pre_week = pppre_datetime-relativedelta(weeks=500)
 print(pre_week)
-pre_month = pre_week-relativedelta(months=1)
+pre_month = pre_week-relativedelta(months=500)
 print(pre_month)
 
 
