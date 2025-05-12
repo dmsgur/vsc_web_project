@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="kr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0&icon_names=close" />
+    <link href="static/coin_index.css" rel="stylesheet" type="text/css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="static/coin_index.js"></script>
+    <title>AI Front</title>
+</head>
+<body>
+    <h1 style="margin:2rem 0">{{titles}}을 이용한 가상화폐분석 페이지</h1>
+    <div><span id="marker"></span><span id="message"></span>
+        <select id="selorder">
+            <option selected> 정렬 선택 하기 </option>
+            <option value="rat_asc">변동율 오름차순정렬</option>
+            <option value="rat_desc">변동율 내림차순정렬</option>
+            <option value="name_asc">이름순 오름차순정렬</option>
+            <option value="name_desc">이름순 내림차순정렬</option>
+            <option value="pri_asc">금액순 오름차순정렬</option>
+            <option value="pri_desc">금액순 내림차순정렬</option>
+        </select> &nbsp;
+        <button id="runorder" style="padding:0.3rem;margin-right:2rem">실행하기</button> 
+        <input type="text" placeholder="검색할 영문코인명을 입력" id="searchname"/> &nbsp;<button id="searchbtn" style="padding:0.3rem"> 검색 </button>
+    </div>
+
+    <div id="contain"></div>
+    <div id="cover" style="display:none"></div>
+    <div id="analBtn" style="display:none">
+        <span class="material-symbols-outlined" id="closebtn"
+            style="display:inline-block;position:fixed;top:2rem;right:2rem;font-size:3rem;
+            cursor: pointer;">
+            close
+        </span>
+        <h1 style="background:seashell;width:50rem;margin:auto;border:1px solid black;margin-top:20vh"></h1>
+        <div id="btncontain">
+            <button id="lstm_anal"> 시계열회귀분석 [LSTM] </button>
+            <button id="conv_anal"> 합성곱회귀분석 [Conv1D] </button>
+        </div>
+        <div id="analresult"></div>
+    </div>
+    
+</body>
+</html>

@@ -1,0 +1,36 @@
+*{margin:0;padding:0}
+body{padding:1rem}
+.unitbox{float:left;margin:1rem 0.5rem;
+border:1px inset black;width:12rem;border-radius: 0.7rem;padding:0.2rem;
+box-shadow: 2px 2px 2px gray;}
+.tailname{width:100%;
+
+border-bottom:1px solid green
+}
+.price{display:inline-block;width:8rem;padding-right:0.5rem;text-align: right;}
+.cname{text-align:center;border-bottom: 1px solid gray;}
+h1{text-align: center;}
+#marker{border-radius: 50%;display:inline-block;
+    width:1rem;height: 1rem;background:silver;
+    border:2px groove purple;box-shadow: 2px 2px 1px gray;}
+#message{
+    display:inline-block;width:30rem;height:2rem;
+    padding-left:1rem;
+    line-height: 1rem;
+}
+.recontent{position:absolute;top:0}
+.mtitle{left:1rem}
+.mcontain{overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;top:1.1rem;width:11.5rem}
+.recontent.mleft{left:1rem;}
+.recontent.mright{left:5rem;}
+.unitbox{position:relative}
+.tailname,.cname{height:1rem}
+bar{display:inlin-block;position:relative}
+#cover{background:orange;opacity: 0.7;width:100vw;height:100vh;position: fixed;left:0;top:0}
+#analBtn{position: fixed;left:0;top:0;margin-left:20vw}
+#btncontain{margin-top:3rem;text-align:center}
+#btncontain button{width:15rem;margin-right:2rem;height:3.5rem;font-size:1.2rem}
+#closebtn:hover{color:red}
