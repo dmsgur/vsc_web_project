@@ -46,13 +46,13 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
     # requests.get()
     #pass #주소로부터 데이터 수신
 def preData(data_sets):
-    pdata_sets = np.array([[d['trade_price'],d['opening_price'],d['high_price'],d['low_price'],d['candle_acc_trade_volume']]\
+    pdata_sets = np.array([[d['opening_price'],d['high_price'],d['low_price'],d['candle_acc_trade_volume'],d['trade_price']]\
             for d in data_sets])
-    #정규분포로 스케일 z = (x - u) / s
+    #min-max 스케일 X_scaled = X_std * (max - min) + min
     recovery_price = []
     for i in range(pdata_sets.shape[1]):
-        tempdict = {"mean":pdata_sets[:,i].mean(),"std":pdata_sets[:,i].std()}
-        pdata_sets[:,i] = (pdata_sets[:,i]-tempdict["mean"])/tempdict["std"]
+        tempdict = {"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()}
+        pdata_sets[:,i] = (pdata_sets[:,i]-tempdict["min"])/(tempdict["max"]-tempdict["min"])
         recovery_price.append(tempdict)
     print(pdata_sets.shape)
     return pdata_sets,recovery_price
@@ -65,7 +65,8 @@ def split_xyData(pre_datasets,time_step=20):
     return np.array(x_data),np.array(y_data)
 def recovery_info(pred_data,recovery_price):
     for dic in range(len(recovery_price)):
-        pred_data[:,dic] = pred_data[:,dic]*recovery_price[dic]["std"]+recovery_price[dic]["mean"]
+        #X_scaled = X_std * (max - min) + min
+        pred_data[:,dic] = pred_data[:,dic]**(recovery_price[dic]["max"]-recovery_price[dic]["min"])+recovery_price[dic]["min"]
     return pred_data
 if "__main__"==__name__:
     # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
@@ -79,10 +80,8 @@ if "__main__"==__name__:
     x_data,y_data = split_xyData(pre_datasets, 5)
     #데이터 정합성 검증
     print(x_data.shape,y_data.shape)
-    print("현재가격복구:",
-          y_data[-1][0] * recovery_price[0]["std"]+recovery_price[0]["mean"])
-    print(y_data[0][0]==x_data[1][4][0])
-    print(y_data[-2][0] == x_data[-1][4][0])
+    print(y_data[0][-1]==x_data[1][4][-1])
+    print(y_data[-2][-1] == x_data[-1][4][-1])
     #가격복구 테스트
     recprice = recovery_info(y_data[:5], recovery_price)
     print("가격복구정보",recprice)
