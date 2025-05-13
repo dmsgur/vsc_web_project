@@ -1,11 +1,4 @@
 # py version 3.9
-import sys
-import tensorflow as tf # tensorflow-cpu 2.10.0
-import numpy as np # numpy 1.26.4
-import requests
-import matplotlib.pyplot as plt
-from tensorflow.keras import Sequential,Model,Input
-from tensorflow.keras.layers import Dense,LSTM,ConvLSTM1D
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 # == 동일 버전 ==
@@ -58,14 +51,24 @@ def preData(data_sets):
     pdata_sets = np.array([[d['trade_price'],d['opening_price'],d['high_price'],d['low_price'],d['candle_acc_trade_volume']]\
             for d in data_sets])
     #정규분포로 스케일 z = (x - u) / s
+    recovery_price = []
     for i in range(pdata_sets.shape[1]):
-        pdata_sets[:,i] = (pdata_sets[:,i]-pdata_sets[:,i].mean())/pdata_sets[:,i].std()
+        tempdict = {"mean":pdata_sets[:,i].mean(),"std":pdata_sets[:,i].std()}
+        pdata_sets[:,i] = (pdata_sets[:,i]-tempdict["mean"])/tempdict["std"]
+        recovery_price.append(tempdict)
     print(pdata_sets.shape)
-    return pdata_sets
+    return pdata_sets,recovery_price
 def split_xyData(pre_datasets,time_step=20):
     x_data = []
     y_data = []
-    # for t in range(time_step):
+    for t in range(len(pre_datasets)-time_step-1):
+        x_data.append(pre_datasets[t:time_step+t])
+        y_data.append(pre_datasets[time_step+t])#다중선형회귀
+    return np.array(x_data),np.array(y_data)
+def recovery_info(pred_data,recovery_price):
+    for dic in range(len(recovery_price)):
+        pred_data[:,dic] = pred_data[:,dic]*recovery_price[dic]["std"]+recovery_price[dic]["mean"]
+    return pred_data
 if "__main__"==__name__:
     # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
     #receive_data()
@@ -74,5 +77,14 @@ if "__main__"==__name__:
     print("수신된 데이터: 수량",len(data_sets),\
           " 이름:",target_name," 시간대:",req_time)
     print("현재가격:",data_sets[-1]["trade_price"])
-    pre_datasets = preData(data_sets)
-    split_xyData(pre_datasets, 5)
+    pre_datasets,recovery_price = preData(data_sets)#정규화가격정보,복구가격편차및평균
+    x_data,y_data = split_xyData(pre_datasets, 5)
+    #데이터 정합성 검증
+    print(x_data.shape,y_data.shape)
+    print("현재가격복구:",
+          y_data[-1][0] * recovery_price[0]["std"]+recovery_price[0]["mean"])
+    print(y_data[0][0]==x_data[1][4][0])
+    print(y_data[-2][0] == x_data[-1][4][0])
+    #가격복구 테스트
+    recprice = recovery_info(y_data[:5], recovery_price)
+    print("가격복구정보",recprice)
