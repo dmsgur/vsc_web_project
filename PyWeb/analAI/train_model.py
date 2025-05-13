@@ -66,9 +66,11 @@ def split_xyData(pre_datasets,time_step=20):
 def recovery_info(pred_data,recovery_price):
     for dic in range(len(recovery_price)):
         #X_scaled = X_std * (max - min) + min
-        pred_data[:,dic] = pred_data[:,dic]**(recovery_price[dic]["max"]-recovery_price[dic]["min"])+recovery_price[dic]["min"]
+        pred_data[:,dic] = pred_data[:,dic]*(recovery_price[dic]["max"]-recovery_price[dic]["min"])+recovery_price[dic]["min"]
     return pred_data
 if "__main__"==__name__:
+    print("전처리 main 실행")
+
     # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
     #receive_data()
     data_sets,target_name,req_time = receive_data(req_time=1,getcnt=1000)

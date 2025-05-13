@@ -5,7 +5,7 @@ import tensorflow as tf # tensorflow-cpu 2.10.0
 import numpy as np # numpy 1.26.4
 import matplotlib.pyplot as plt
 from tensorflow.keras import Sequential,Model,Input
-from tensorflow.keras.layers import Dense,LSTM,ConvLSTM1D
+from tensorflow.keras.layers import Dense,LSTM,ConvLSTM1D,Dropout
 from train_model import receive_data,preData,split_xyData,recovery_info
 # == 동일 버전 ==
 print("python -v ",sys.version)
@@ -30,6 +30,7 @@ def createModel_lstm(outputsize):
     ))
     lstm_model.add(Dense(128,activation="relu"))
     lstm_model.add(Dense(64,activation="relu"))
+    lstm_model.add(Dropout(0.3))
     lstm_model.add(Dense(32,activation="relu"))
     lstm_model.add(Dense(5,activation="sigmoid"))
     lstm_model.compile(loss=tf.keras.losses.MeanSquaredError(),
@@ -54,26 +55,34 @@ def drawGraph(losses,val_loss):
 if "__main__"==__name__:
     user_count=1000
     user_timestep=30
+    epoch=100
     data_sets, target_name, req_time = receive_data(req_time=1, getcnt=user_count)
     print("수신된 데이터: 수량", len(data_sets), \
           " 이름:", target_name, " 시간대:", req_time)
     print("현재가격:", data_sets[-1]["trade_price"])
     pre_datasets, recovery_price = preData(data_sets)  # 정규화가격정보,복구가격편차및평균
+    print("pre_datasets==")
+    print(pre_datasets.max())
     x_data, y_data = split_xyData(pre_datasets, user_timestep)
-    print(x_data.max())
-    print(y_data.max())
-    print(x_data.min())
-    print(y_data.min())
+    print("pre_datasets==")
+    print(pre_datasets.max())
+
     # 데이터 정합성 검증
     print(x_data.shape, y_data.shape)
     print(y_data[0][0] == x_data[1][4][0])
     print(y_data[-2][0] == x_data[-1][4][0])
-    # 가격복구 검증
-    recprice = recovery_info(y_data[:1], recovery_price)
-    print("가격복구정보", recprice)
+    print(x_data.max())
+    print(y_data.max())
+    print(x_data.min())
+    print(y_data.min())
     lstm_model = createModel_lstm(user_timestep)
     cbs = createCallback(target_name, "lstm")
-    fhist = lstm_model.fit(x_data,y_data,epochs=100,validation_split=0.1,batch_size=user_count//30,
+    print("데이터정보")
+    print(x_data.max())
+    print((y_data>1).sum())
+    print(x_data.min())
+    print(y_data.min())
+    fhist = lstm_model.fit(x_data,y_data,epochs=epoch,validation_data=(x_data,y_data),batch_size=user_count//30,
                            callbacks=cbs)
     # print("==========",os.getcwd())
 
