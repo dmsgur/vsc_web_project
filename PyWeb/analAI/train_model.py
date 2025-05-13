@@ -37,7 +37,6 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
         req_time="minutes/"+str(req_time)
     dt = datetime.now().replace(microsecond=0)
     while(True):
-        print("=========")
         #yyyy-MM-dd HH:mm:ss
         params = {"market":"KRW-"+target_name,"to":dt,"count":getcnt}
         result = requests.get(MAIN_URL+req_time,params)
@@ -45,13 +44,8 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
         res.reverse()
         if not res:
             break
-        print("최초",res[0]["candle_date_time_kst"])
-        print("최초1", res[1]["candle_date_time_kst"])
-        print("마지막-1", res[-2]["candle_date_time_kst"])
-        print("마지막",res[-1]["candle_date_time_kst"])
         dt = datetime.strptime(res[0]["candle_date_time_kst"], "%Y-%m-%dT%H:%M:%S")
-        data_sets.extend(\
-            [o for o in res if not o["candle_date_time_kst"] in date_datas])
+        data_sets=[o for o in res if not o["candle_date_time_kst"] in date_datas]+data_sets
         #minutes , days, weeks, months
         if minutetime:
             dt = dt - timedelta(minutes=minutetime-1)
@@ -61,7 +55,6 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
     # requests.get()
     #pass #주소로부터 데이터 수신
 def preData(data_sets):
-    print("현재가격:", data_sets[0]['trade_price'])
     pdata_sets = np.array([[d['trade_price'],d['opening_price'],d['high_price'],d['low_price'],d['candle_acc_trade_volume']]\
             for d in data_sets])
     #정규분포로 스케일 z = (x - u) / s
@@ -69,15 +62,17 @@ def preData(data_sets):
         pdata_sets[:,i] = (pdata_sets[:,i]-pdata_sets[:,i].mean())/pdata_sets[:,i].std()
     print(pdata_sets.shape)
     return pdata_sets
-def splitData(pre_datasets,time_step=20):
-    pass
-
+def split_xyData(pre_datasets,time_step=20):
+    x_data = []
+    y_data = []
+    # for t in range(time_step):
 if "__main__"==__name__:
     # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
     #receive_data()
-    data_sets,target_name,req_time = receive_data(req_time="weeks",getcnt=1000)
+    data_sets,target_name,req_time = receive_data(req_time=1,getcnt=1000)
     #data_sets,target_name,req_time = receive_data(req_time="months",getcnt=500)
     print("수신된 데이터: 수량",len(data_sets),\
           " 이름:",target_name," 시간대:",req_time)
+    print("현재가격:",data_sets[-1]["trade_price"])
     pre_datasets = preData(data_sets)
-    splitData(pre_datasets, 5)
+    split_xyData(pre_datasets, 5)
