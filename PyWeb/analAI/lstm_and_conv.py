@@ -80,7 +80,7 @@ if "__main__"==__name__:
     print("가격복구정보", recprice)
     lstm_model = createModel_lstm(user_timestep)
     cbs = createCallback(target_name, "lstm")
-    fhist = lstm_model.fit(x_data,y_data,epochs=100,validation_split=0.1,batch_size=usercount//30,
+    fhist = lstm_model.fit(x_data,y_data,epochs=100,validation_split=0.1,batch_size=user_count//30,
                            callbacks=cbs)
     # print("==========",os.getcwd())
 
