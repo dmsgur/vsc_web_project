@@ -31,7 +31,7 @@ def createModel_lstm(outputsize):
     lstm_model.add(Dense(128,activation="relu"))
     lstm_model.add(Dense(64,activation="relu"))
     lstm_model.add(Dense(32,activation="relu"))
-    lstm_model.add(Dense(outputsize,activation="sigmoid"))
+    lstm_model.add(Dense(5,activation="sigmoid"))
     lstm_model.compile(loss=tf.keras.losses.MeanSquaredError(),
                        optimizer=tf.keras.optimizers.Adam())
     return lstm_model
