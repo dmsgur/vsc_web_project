@@ -41,19 +41,12 @@ def createCallback(coinname,modeltype):
     paths ="./%s/%s/%s"%(modeltype+"save",coinname,date.today())
     if not os.path.exists(paths):
         os.makedirs(paths)#여러개의 디렉토리 생성
-    print("./%s/%s/%s/%s_{epoch:02d}-{val_loss:.2f}.keras"%\
-        (modeltype+"save",coinname,date.today(),modeltype))
-
-    es = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                      patience=30,
-                                                      mode='min')
+    es = tf.keras.callbacks.EarlyStopping(monitor='val_loss',\
+                                          patience=30,mode='min')
     mcp = tf.keras.callbacks.ModelCheckpoint(
-        "./%s/%s/%s_{epoch:02d}-{val_loss:.2f}.keras"%\
-        (modeltype+"save",coinname,modeltype),
-        monitor='val_loss',
-        verbose=0,
-        save_best_only=True,
-        mode='auto')
+        "./%s/%s/%s/%s_{epoch:02d}-{val_loss:.2f}.keras"%\
+        (modeltype+"save",coinname,date.today(),modeltype),
+        monitor='val_loss',verbose=0,save_best_only=True,mode='auto')
     return [es,mcp]
 def drawGraph(losses,val_loss):
     pass
