@@ -17,24 +17,23 @@ def createModel_lstm(outputsize):
     lstm_model.add(Input((outputsize,5)))
     lstm_model.add(LSTM(
         128,
-        dropout=0.3,
-        recurrent_dropout=0.2,
+        dropout=0.4,
+        recurrent_dropout=0.3,
         seed=123,
         return_sequences=True,
         go_backwards=True,
     ))
     lstm_model.add(LSTM(
         64,
-        dropout=0.2,
+        dropout=0.3,
         seed=123
     ))
     lstm_model.add(Dense(128,activation="relu"))
-    lstm_model.add(Dense(64,activation="relu"))
-    lstm_model.add(Dropout(0.3))
+    lstm_model.add(Dropout(0.4))
     lstm_model.add(Dense(32,activation="relu"))
     lstm_model.add(Dense(5,activation="sigmoid"))
     lstm_model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                       optimizer=tf.keras.optimizers.Adam())
+                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001,beta_1=0.6))
     return lstm_model
 def createCallback(coinname,modeltype):
     #'./lstmsave/BTC/2025-05-13'
@@ -49,13 +48,24 @@ def createCallback(coinname,modeltype):
         (modeltype+"save",coinname,date.today(),modeltype),
         monitor='val_loss',verbose=0,save_best_only=True,mode='auto')
     return [es,mcp]
-def drawGraph(losses,val_loss):
-    pass
+def drawGraph(losses,val_losses):
+    plt.figure(figsize=(3,3))
+    plt.plot(losses,label="loss")
+    plt.plot(val_losses, label="valid_loss")
+    plt.legend()
+    plt.title("LOSSES")
+    plt.show()
+def drawPredict(y_predict,y_true):
+    plt.scatter(y_true,y_predict)
+    plt.plot(y_true,y_true)
+    plt.xlabel("true")
+    plt.ylabel("pred")
+    plt.show()
 
 if "__main__"==__name__:
     user_count=1000
-    user_timestep=30
-    epoch=100
+    user_timestep=60
+    epoch=10
     data_sets, target_name, req_time = receive_data(req_time=1, getcnt=user_count)
     print("수신된 데이터: 수량", len(data_sets), \
           " 이름:", target_name, " 시간대:", req_time)
@@ -84,6 +94,9 @@ if "__main__"==__name__:
     print(y_data.min())
     fhist = lstm_model.fit(x_data,y_data,epochs=epoch,validation_data=(x_data,y_data),batch_size=user_count//30,
                            callbacks=cbs)
+    drawGraph(fhist.history["loss"], fhist.history["val_loss"])
+    y_pred = lstm_model.predict(x_data)
+    drawPredict(y_pred, y_data)
     # print("==========",os.getcwd())
 
 
