@@ -14,7 +14,7 @@ print("numpy -v ",np.__version__)
 #모델 구성 및 훈련 최적화 모델 저장
 def createModel_lstm(outputsize):
     lstm_model = Sequential()
-    lstm_model.add(Input((5,5)))
+    lstm_model.add(Input((outputsize,5)))
     lstm_model.add(LSTM(
         128,
         dropout=0.3,
