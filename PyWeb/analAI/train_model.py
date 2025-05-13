@@ -1,10 +1,8 @@
 # py version 3.9
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-# == 동일 버전 ==
-print("python -v ",sys.version)
-print("tensorflow-cpu -v",tf.__version__)
-print("numpy -v ",np.__version__)
+import numpy as  np
+import requests
 NAME_URL = r"https://api.bithumb.com/v1/market/all"
 MAIN_URL = r"https://api.bithumb.com/v1/candles/"
 # https://api.bithumb.com/v1/candles/minutes/{unit}
