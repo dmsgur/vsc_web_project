@@ -17,23 +17,22 @@ def createModel_lstm(outputsize):
     lstm_model.add(Input((outputsize,5)))
     lstm_model.add(LSTM(
         128,
-        dropout=0.4,
-        recurrent_dropout=0.3,
+        dropout=0.3,
+        recurrent_dropout=0.2,
         seed=123,
         return_sequences=True,
         go_backwards=True,
     ))
     lstm_model.add(LSTM(
         64,
-        dropout=0.3,
         seed=123
     ))
     lstm_model.add(Dense(128,activation="relu"))
-    lstm_model.add(Dropout(0.4))
+    lstm_model.add(Dropout(0.3))
     lstm_model.add(Dense(32,activation="relu"))
     lstm_model.add(Dense(5,activation="sigmoid"))
     lstm_model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001,beta_1=0.6))
+                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005,beta_1=0.7))
     return lstm_model
 def createCallback(coinname,modeltype):
     #'./lstmsave/BTC/2025-05-13'
