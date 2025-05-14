@@ -53,27 +53,23 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
     #pass #주소로부터 데이터 수신
 def createScaler(coinname,pdata_sets):
     scalers = []
-    for i in range(pdata_sets.shape[1]):
-        scalers.append({"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()})
-    with open(f"./config/{coinname}_scaler","wb") as fp:
-        pickle.dump(scalers,fp)
+    paths = f"./config/{coinname}_scaler"
+    if os.path.exists(paths):
+        with open(paths, "wb") as fp:
+            scalers = pickle.load(fp)
+    else:
+        for i in range(pdata_sets.shape[1]):
+            scalers.append({"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()})
+        with open(paths,"wb") as fp:
+            pickle.dump(scalers,fp)
     return scalers
-def callScaler(coinname):
-    scalers=None
-    with open(f"./config/{coinname}_scaler","wb") as fp:
-        scalers=pickle.load(fp)
-    return scalers
-def preData(data_sets,coinname,cre_scaler=False):
+def preData(data_sets,coinname):
     pdata_sets = np.array([[d['opening_price'],d['high_price'],d['low_price'],d['candle_acc_trade_volume'],d['trade_price']]\
             for d in data_sets])
     #min-max 스케일 X_scaled = X_std * (max - min) + min
-    scalers = None
-    if cre_scaler:
-        scalers=createScaler(coinname,pdata_sets)
-    else :
-        scalers=callScaler(coinname)
+    scalers=createScaler(coinname,pdata_sets)
     for i in range(pdata_sets.shape[1]):
-        pdata_sets[:,i] = (pdata_sets[:,i]-scalers[i]["min"])/(scalers[i]["max"]-scalers[i]["min"])
+       pdata_sets[:,i] = (pdata_sets[:,i]-scalers[i]["min"])/(scalers[i]["max"]-scalers[i]["min"])
     print(pdata_sets.shape)
     return pdata_sets
 def split_xyData(pre_datasets,step="middle"):
@@ -89,7 +85,7 @@ def split_xyData(pre_datasets,step="middle"):
         y_data.append(pre_datasets[time_step+t])#다중선형회귀
     return np.array(x_data),np.array(y_data)
 def recovery_info(pred_data,coinname):
-    scalers = callScaler(coinname)
+    scalers = createScaler(coinname)
     for dic in range(len(scalers)):
         #X_scaled = X_std * (max - min) + min
         pred_data[:,dic] = pred_data[:,dic]*(scalers[dic]["max"]-scalers[dic]["min"])+scalers[dic]["min"]
@@ -127,7 +123,7 @@ class ConfingData():
         getnct = input("최초 훈련으로 얻어올 데이터의 수량을 입력하세요")
         data_sets,target_name=receive_data(target_name=self.coinname,req_time= self.req_time, getcnt=int(getnct) if getnct else None)
         print(target_name,":수신데이터수량:",len(data_sets))
-        preprocessed_sets = preData(data_sets, self.coinname, cre_scaler=True)
+        preprocessed_sets = preData(data_sets, self.coinname)
         print(target_name,"데이터 전처리가 완료됨")
         x_data,y_data = split_xyData(preprocessed_sets, step=self.timestepstr)
         if not batsize:
@@ -186,15 +182,21 @@ class UserService():
 
 if "__main__"==__name__:
     #createModel_conv,createModel_lstm,createCallback
+    #lstm 모델 생성
     COIN_NAME="BTC"
     TIME_STEP_STR = "middle"
     REQ_TIME="days"
     MODEL_TYPE="lstm"
-    lstm_admin = ConfingData(coinname=COIN_NAME,timestepstr=TIME_STEP_STR,req_time=REQ_TIME)
-    lstm_model = createModel_lstm(TIME_STEP_STR)
+    # lstm_admin = ConfingData(coinname=COIN_NAME,timestepstr=TIME_STEP_STR,req_time=REQ_TIME)
+    # lstm_model = createModel_lstm(TIME_STEP_STR)
+    # cbs = createCallback(COIN_NAME)
+    # lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=5,batsize=None)
+    # conv 모델 생성
+    MODEL_TYPE = "conv"
+    conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
+    conv_model = createModel_conv(TIME_STEP_STR)
     cbs = createCallback(COIN_NAME)
-    lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=5,batsize=None)
-
+    conv_admin.init_train(train_type=MODEL_TYPE, smodel=conv_model, cbs=cbs, epoch=5, batsize=None)
     # # print("전처리 main 실행")
     # # # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
     # # #receive_data()
