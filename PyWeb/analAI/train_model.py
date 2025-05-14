@@ -55,7 +55,7 @@ def createScaler(coinname,pdata_sets):
     scalers = []
     paths = f"./config/{coinname}_scaler"
     if os.path.exists(paths):
-        with open(paths, "wb") as fp:
+        with open(paths, "rb") as fp:
             scalers = pickle.load(fp)
     else:
         for i in range(pdata_sets.shape[1]):
