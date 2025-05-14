@@ -1,0 +1,31 @@
+1. 최초 훈련 파일 목록 불러오기
+def receive_data(target_name="BTC",req_time="days",getcnt=200)
+    req_time : months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
+        type=str | int
+    getcnt : 수신할 파일의 수량
+    ret > return data_sets(raw),target_name
+2. 코인별 전처리기
+def preData(data_sets,coinname,cre_scaler=False):
+    data_sets(raw) : 필요필드가 분리되지 않은 원형 데이터
+    cre_scaler : True 이면 스케일러 다시 생성 False 이면 기존 스케일러 불러오기
+    ret > return pdata_sets(필요 필드 분리와 데이터의 스케일링된 데이터셋)
+3. X, Y 시계열 데이터 분리 생성
+def split_xyData(pre_datasets,step="middle"):
+    pre_datasets : 스케일링된 데이터 세트
+    time_step : 시계열 분리할 x 파일의 수량
+        short - 30개씩 분리 middle - 60개씩 분리 long - 90개씩 분리
+        llong - 180개씩 분리
+            type : str
+4. 스케일링된 가격 복원
+def recovery_info(pred_data,coinname):
+    pred_data : 스케일링 적용 예측된 가격정보
+    ret > return pred_data(복원된 가격정보)
+5. 예측 가격 출력 (서비스)
+def predict_service(target_name="BTC",req_time="days",pred_timestep="middle"):
+    req_time : months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
+        type=str | int
+    pred_timestep : 시계열 분리할 x 파일의 수량
+        short - 30개씩 분리 middle - 60개씩 분리 long - 90개씩 분리
+        llong - 180개씩 분리
+            type : str
+    ret >  return data_sets(raw),target_name

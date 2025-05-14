@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import numpy as  np
 import requests
+import pickle
 NAME_URL = r"https://api.bithumb.com/v1/market/all"
 MAIN_URL = r"https://api.bithumb.com/v1/candles/"
 # https://api.bithumb.com/v1/candles/minutes/{unit}
@@ -42,36 +43,58 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
             dt = dt - timedelta(minutes=minutetime-1)
         date_datas.extend([ o["candle_date_time_kst"] for o in res ])
         if len(data_sets)>=getcnt:break
-    return data_sets,target_name,req_time
+    return data_sets,target_name
     # requests.get()
     #pass #주소로부터 데이터 수신
-def preData(data_sets):
+def createScaler(coinname,pdata_sets):
+    scalers = []
+    for i in range(pdata_sets.shape[1]):
+        scalers.append({"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()})
+    with open(f"./config/{coinname}_scaler","wb") as fp:
+        pickle.dump(scalers,fp)
+    return scalers
+def callScaler(coinname):
+    scalers=None
+    with open(f"./config/{coinname}_scaler","wb") as fp:
+        scalers=pickle.load(fp)
+    return scalers
+def preData(data_sets,coinname,cre_scaler=False):
     pdata_sets = np.array([[d['opening_price'],d['high_price'],d['low_price'],d['candle_acc_trade_volume'],d['trade_price']]\
             for d in data_sets])
     #min-max 스케일 X_scaled = X_std * (max - min) + min
-    recovery_price = []
+    scalers = None
+    if cre_scaler:
+        scalers=createScaler(pdata_sets,coinname)
+    else :
+        scalers=callScaler(coinname)
     for i in range(pdata_sets.shape[1]):
-        tempdict = {"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()}
-        pdata_sets[:,i] = (pdata_sets[:,i]-tempdict["min"])/(tempdict["max"]-tempdict["min"])
-        recovery_price.append(tempdict)
+        pdata_sets[:,i] = (pdata_sets[:,i]-scalers[i]["min"])/(scalers[i]["max"]-scalers[i]["min"])
     print(pdata_sets.shape)
-    return pdata_sets,recovery_price
-def split_xyData(pre_datasets,time_step=20):
+    return pdata_sets
+def split_xyData(pre_datasets,step="middle"):
+    time_step=0
+    if step=="short":time_step=30
+    elif step=="long":time_step=90
+    elif step=="llong":time_step=180
+    else : time_step=60
     x_data = []
     y_data = []
     for t in range(len(pre_datasets)-time_step-1):
         x_data.append(pre_datasets[t:time_step+t])
         y_data.append(pre_datasets[time_step+t])#다중선형회귀
     return np.array(x_data),np.array(y_data)
-def recovery_info(pred_data,recovery_price):
-    for dic in range(len(recovery_price)):
+def recovery_info(pred_data,coinname):
+    scalers = callScaler(coinname)
+    for dic in range(len(scalers)):
         #X_scaled = X_std * (max - min) + min
-        pred_data[:,dic] = pred_data[:,dic]*(recovery_price[dic]["max"]-recovery_price[dic]["min"])+recovery_price[dic]["min"]
+        pred_data[:,dic] = pred_data[:,dic]*(scalers[dic]["max"]-scalers[dic]["min"])+scalers[dic]["min"]
     return pred_data
-def predict_service(target_name="BTC",req_time="days",pred_timestep=60):
-    if pred_timestep>200:
-        print("타입스텝은 최대 200 입니다. 200개로 조정하여 분석합니다.")
-        pred_timestep=200
+def predict_service(target_name="BTC",req_time="days",pred_step="middle"):
+    pred_timestep=0
+    if pred_step=="short":pred_timestep=30
+    elif pred_step=="long":pred_timestep=90
+    elif pred_step=="llong":pred_timestep=180
+    else : pred_timestep=60
     data_sets = []  # 최근데이터를 맨 뒤로 보냄
     date_datas = []  # 수신된 날짜 데이터
     minutetime = 0
@@ -86,7 +109,28 @@ def predict_service(target_name="BTC",req_time="days",pred_timestep=60):
     data_sets = [o for o in res if not o["candle_date_time_kst"] in date_datas] + data_sets
     # minutes , days, weeks, months
     date_datas.extend([o["candle_date_time_kst"] for o in res])
-    return data_sets, target_name, req_time
+    return data_sets, target_name
+class ConfingData():
+    def __init__(self,coinname="BTC",timestepstr="middle",req_time="days"):
+        self.coinname=coinname
+        self.timestepstr = timestepstr
+        self.req_time=req_time
+    def init_train(self):
+        passwd = input("최초 훈련을 시작합니다. 모든 모델은 초기화 됩니다. 비밀번호를 입력해주세요")
+        if passwd != "1234":
+            return
+    def upgrade_train(self):
+        passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요")
+        if passwd != "5678":
+            return
+class UserService():
+    def __init__(self,coinname="BTC",timestepstr="middle",req_time="days"):
+        self.coinname=coinname
+        self.timestepstr = timestepstr
+        self.req_time=req_time
+    def pred_service(self):
+        print("예측을 시작합니다.")
+
 
 
 if "__main__"==__name__:
@@ -112,4 +156,4 @@ if "__main__"==__name__:
     print(len(data_sets))
     print(target_name)
     print(req_time)
-    preData(data_sets)
+    preData(data_sets,target_name)
