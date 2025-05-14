@@ -5,12 +5,40 @@ import tensorflow as tf # tensorflow-cpu 2.10.0
 import numpy as np # numpy 1.26.4
 import matplotlib.pyplot as plt
 from tensorflow.keras import Sequential,Model,Input
-from tensorflow.keras.layers import Dense,LSTM,ConvLSTM1D,Dropout
+from tensorflow.keras.layers import Dense,LSTM,ConvLSTM1D,Dropout,Reshape
 from train_model import receive_data,preData,split_xyData,recovery_info
+
+np.random.seed(123)
+tf.random.set_seed(123)
 # == 동일 버전 ==
 print("python -v ",sys.version)
 print("tensorflow-cpu -v",tf.__version__)
 print("numpy -v ",np.__version__)
+def createModel_conv(outputsize):
+    conv_model = Sequential()
+    conv_model.add(Input((outputsize,5)))
+    conv_model.add(Reshape((outputsize,5,1)))
+    conv_model.add(ConvLSTM1D(
+    8,3, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
+    return_sequences=True,go_backwards=True))
+    conv_model.add(ConvLSTM1D(
+    32,5, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
+    return_sequences=True,go_backwards=True))
+    conv_model.add(ConvLSTM1D(
+    128,5, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
+    return_sequences=False))
+    conv_model.add(Dense(256,activation="relu"))
+    conv_model.add(Dropout(0.4))
+    conv_model.add(Dense(64,activation="relu"))
+    conv_model.add(Dense(32,activation="relu"))
+    conv_model.add(Dense(1,activation="sigmoid"))
+    conv_model.add(Reshape((-1,)))
+    conv_model.compile(loss=tf.keras.losses.MeanSquaredError(),
+                       optimizer=tf.keras.optimizers.Adam(),
+                       metrics=["acc"])
+    return conv_model
+
+
 #모델 구성 및 훈련 최적화 모델 저장
 def createModel_lstm(outputsize):
     lstm_model = Sequential()
@@ -32,7 +60,8 @@ def createModel_lstm(outputsize):
     lstm_model.add(Dense(32,activation="relu"))
     lstm_model.add(Dense(5,activation="sigmoid"))
     lstm_model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005,beta_1=0.7))
+                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005,beta_1=0.7),
+                       metrics=["acc"])
     return lstm_model
 def createCallback(coinname,modeltype):
     #'./lstmsave/BTC/2025-05-13'
@@ -84,18 +113,36 @@ if "__main__"==__name__:
     print(y_data.max())
     print(x_data.min())
     print(y_data.min())
-    lstm_model = createModel_lstm(user_timestep)
-    cbs = createCallback(target_name, "lstm")
+    # lstm_model = createModel_lstm(user_timestep)
+    # cbs = createCallback(target_name, "lstm")
     print("데이터정보")
     print(x_data.max())
     print((y_data>1).sum())
     print(x_data.min())
     print(y_data.min())
-    fhist = lstm_model.fit(x_data,y_data,epochs=epoch,validation_data=(x_data,y_data),batch_size=user_count//30,
-                           callbacks=cbs)
-    drawGraph(fhist.history["loss"], fhist.history["val_loss"])
-    y_pred = lstm_model.predict(x_data)
-    drawPredict(y_pred, y_data)
+    # fhist = lstm_model.fit(x_data,y_data,epochs=epoch,validation_data=(x_data,y_data),batch_size=user_count//30,
+    #                        callbacks=cbs)
+    # drawGraph(fhist.history["loss"], fhist.history["val_loss"])
+    # y_pred = lstm_model.predict(x_data)
+    # drawPredict(y_pred, y_data)
     # print("==========",os.getcwd())
+    conv_model=createModel_conv(user_timestep)
+    cbs = createCallback(target_name,"conv")
+    fhist = conv_model.fit(x_data,y_data,epochs=epoch,validation_data=(x_data,y_data),batch_size=user_count//30,
+                            callbacks=cbs)
+    drawGraph(fhist.history["loss"], fhist.history["val_loss"])
+    y_pred = conv_model.predict(x_data)
+    drawPredict(y_pred, y_data)
+    recprice=recovery_info(y_pred[-5:],recovery_price)
+    print(recprice)
+    #['opening_price'],['high_price'],['low_price'],['candle_acc_trade_volume'],['trade_price']
+    print(recprice[-1][0])
+    print(recprice[-1][1])
+    print(recprice[-1][2])
+    print(recprice[-1][3])
+    print(recprice[-1][4])
+    loss,acc=conv_model.evaluate(x_data,y_data)
+    print(acc,loss)
+
 
 

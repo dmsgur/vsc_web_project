@@ -68,22 +68,48 @@ def recovery_info(pred_data,recovery_price):
         #X_scaled = X_std * (max - min) + min
         pred_data[:,dic] = pred_data[:,dic]*(recovery_price[dic]["max"]-recovery_price[dic]["min"])+recovery_price[dic]["min"]
     return pred_data
-if "__main__"==__name__:
-    print("전처리 main 실행")
+def predict_service(target_name="BTC",req_time="days",pred_timestep=60):
+    if pred_timestep>200:
+        print("타입스텝은 최대 200 입니다. 200개로 조정하여 분석합니다.")
+        pred_timestep=200
+    data_sets = []  # 최근데이터를 맨 뒤로 보냄
+    date_datas = []  # 수신된 날짜 데이터
+    minutetime = 0
+    if type(req_time) == int:
+        minutetime = req_time
+        req_time = "minutes/" + str(req_time)
+    # yyyy-MM-dd HH:mm:ss
+    params = {"market": "KRW-" + target_name,  "count": pred_timestep}
+    result = requests.get(MAIN_URL + req_time, params)
+    res = result.json()
+    res.reverse()
+    data_sets = [o for o in res if not o["candle_date_time_kst"] in date_datas] + data_sets
+    # minutes , days, weeks, months
+    date_datas.extend([o["candle_date_time_kst"] for o in res])
+    return data_sets, target_name, req_time
 
-    # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
-    #receive_data()
-    data_sets,target_name,req_time = receive_data(req_time=1,getcnt=1000)
-    #data_sets,target_name,req_time = receive_data(req_time="months",getcnt=500)
-    print("수신된 데이터: 수량",len(data_sets),\
-          " 이름:",target_name," 시간대:",req_time)
-    print("현재가격:",data_sets[-1]["trade_price"])
-    pre_datasets,recovery_price = preData(data_sets)#정규화가격정보,복구가격편차및평균
-    x_data,y_data = split_xyData(pre_datasets, 5)
-    #데이터 정합성 검증
-    print(x_data.shape,y_data.shape)
-    print(y_data[0][-1]==x_data[1][4][-1])
-    print(y_data[-2][-1] == x_data[-1][4][-1])
-    #가격복구 테스트
-    recprice = recovery_info(y_data[:5], recovery_price)
-    print("가격복구정보",recprice)
+
+if "__main__"==__name__:
+    # print("전처리 main 실행")
+    # # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
+    # #receive_data()
+    # data_sets,target_name,req_time = receive_data(req_time=1,getcnt=1000)
+    # #data_sets,target_name,req_time = receive_data(req_time="months",getcnt=500)
+    # print("수신된 데이터: 수량",len(data_sets),\
+    #       " 이름:",target_name," 시간대:",req_time)
+    # print("현재가격:",data_sets[-1]["trade_price"])
+    # pre_datasets,recovery_price = preData(data_sets)#정규화가격정보,복구가격편차및평균
+    # x_data,y_data = split_xyData(pre_datasets, 5)
+    # #데이터 정합성 검증
+    # print(x_data.shape,y_data.shape)
+    # print(y_data[0][-1]==x_data[1][4][-1])
+    # print(y_data[-2][-1] == x_data[-1][4][-1])
+    # #가격복구 테스트
+    # recprice = recovery_info(y_data[:5], recovery_price)
+    # print("가격복구정보",recprice)
+    #타입스텝은 장기, 중기, 단기로 픽스
+    data_sets, target_name, req_time = predict_service()
+    print(len(data_sets))
+    print(target_name)
+    print(req_time)
+    preData(data_sets)
