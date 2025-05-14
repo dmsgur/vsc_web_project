@@ -6,6 +6,8 @@ import requests
 import pickle
 import matplotlib.pyplot as plt
 import os
+import re
+import glob
 from datetime import date
 from lstm_and_conv import createModel_conv,createModel_lstm,createCallback
 NAME_URL = r"https://api.bithumb.com/v1/market/all"
@@ -143,6 +145,7 @@ class ConfingData():
         plt.plot(fhist.history["val_loss"], label="valid_loss")
         plt.legend()
         plt.title("LOSSES")
+        plt.subplot(1, 2, 2)
         plt.plot(fhist.history["acc"], label="train_acc")
         plt.plot(fhist.history["val_acc"], label="valid_acc")
         plt.legend()
@@ -160,8 +163,11 @@ class ConfingData():
             if not os.path.exists(paths):
                 os.makedirs(paths)  # 여러개의 디렉토리 생성
             else:
-                print(os.listdir(paths))#디렉토리 목록 출력후 기존데이터 백업본으로 생성
-            smodel.save("/{}_{}_{}.keras".format(self.coinname,self.timestepstr,date.today()))
+                for file in glob.glob("*.bak"):
+                    os.remove(file)
+                premodel = [f for f in os.listdir(paths) if re.match('.+\.keras',f)]
+                os.rename(premodel[0],premodel[0].split(".")[0]+".bak")
+            smodel.save(paths+"/{}_{}_{}.keras".format(self.coinname,self.timestepstr,date.today()))
 
     def upgrade_train(self):
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요")
