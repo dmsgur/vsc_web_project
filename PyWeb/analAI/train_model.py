@@ -7,7 +7,6 @@ import pickle
 import matplotlib.pyplot as plt
 import os
 import re
-import glob
 from datetime import date
 from lstm_and_conv import createModel_conv,createModel_lstm,createCallback
 NAME_URL = r"https://api.bithumb.com/v1/market/all"
@@ -163,10 +162,12 @@ class ConfingData():
             if not os.path.exists(paths):
                 os.makedirs(paths)  # 여러개의 디렉토리 생성
             else:
-                for file in glob.glob(f"*_{self.timestepstr}_*.bak"):
-                    os.remove(file)
+                prebak = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}.+\.bak', f)]
+                if len(prebak):
+                    os.remove(paths+"/"+prebak)
                 premodel = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}.+\.keras',f)]
-                os.rename(premodel[0],premodel[0].split(".")[0]+".bak")
+                if len(premodel):
+                    os.rename(paths+"/"+premodel[0],paths+"/"+premodel[0].split(".")[0]+".bak")
             smodel.save(paths+"/{}_{}_{}.keras".format(self.coinname,self.timestepstr,date.today()))
 
     def upgrade_train(self):
