@@ -68,7 +68,7 @@ def preData(data_sets,coinname,cre_scaler=False):
     #min-max 스케일 X_scaled = X_std * (max - min) + min
     scalers = None
     if cre_scaler:
-        scalers=createScaler(pdata_sets,coinname)
+        scalers=createScaler(coinname,pdata_sets)
     else :
         scalers=callScaler(coinname)
     for i in range(pdata_sets.shape[1]):
@@ -124,7 +124,7 @@ class ConfingData():
         if passwd != "1234":
             return
         getnct = input("최초 훈련으로 얻어올 데이터의 수량을 입력하세요")
-        data_sets,target_name=receive_data(target_name=self.coinname,req_time= self.timestepstr, getcnt=int(getnct))
+        data_sets,target_name=receive_data(target_name=self.coinname,req_time= self.req_time, getcnt=int(getnct) if getnct else None)
         print(target_name,":수신데이터수량:",len(data_sets))
         preprocessed_sets = preData(data_sets, self.coinname, cre_scaler=True)
         print(target_name,"데이터 전처리가 완료됨")
