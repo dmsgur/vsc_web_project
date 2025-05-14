@@ -4,6 +4,10 @@ from dateutil.relativedelta import relativedelta
 import numpy as  np
 import requests
 import pickle
+import matplotlib.pyplot as plt
+import os
+from datetime import date
+from lstm_and_conv import createModel_conv,createModel_lstm,createCallback
 NAME_URL = r"https://api.bithumb.com/v1/market/all"
 MAIN_URL = r"https://api.bithumb.com/v1/candles/"
 # https://api.bithumb.com/v1/candles/minutes/{unit}
@@ -115,10 +119,50 @@ class ConfingData():
         self.coinname=coinname
         self.timestepstr = timestepstr
         self.req_time=req_time
-    def init_train(self):
-        passwd = input("최초 훈련을 시작합니다. 모든 모델은 초기화 됩니다. 비밀번호를 입력해주세요")
+    def init_train(self,train_type="lstm",smodel=None,cbs=None,epoch=None,batsize=None):
+        passwd = input("최초 훈련을 시작합니다. 스케일러등 모든 모델은 초기화 됩니다. 비밀번호를 입력해주세요")
         if passwd != "1234":
             return
+        getnct = input("최초 훈련으로 얻어올 데이터의 수량을 입력하세요")
+        data_sets,target_name=receive_data(target_name=self.coinname,req_time= self.timestepstr, getcnt=int(getnct))
+        print(target_name,":수신데이터수량:",len(data_sets))
+        preprocessed_sets = preData(data_sets, self.coinname, cre_scaler=True)
+        print(target_name,"데이터 전처리가 완료됨")
+        x_data,y_data = split_xyData(preprocessed_sets, step=self.timestepstr)
+        if not batsize:
+            batsize = len(x_data)//20
+        if not epoch:
+            epoch=200
+        fhist = smodel.fit(x_data,y_data,epochs=epoch,callbacks=cbs,batch_size=batsize,
+                   validation_data=(x_data,y_data))
+        print("훈련이 완료되었습니다.")
+        loss,acc = smodel.evaluate(x_data,y_data)
+        print(f"손실: {loss:.2f} 정확률: {acc*100:.2f} %")
+        plt.subplot(1,2,1)
+        plt.plot(fhist.history["loss"],label="train_loss")
+        plt.plot(fhist.history["val_loss"], label="valid_loss")
+        plt.legend()
+        plt.title("LOSSES")
+        plt.plot(fhist.history["acc"], label="train_acc")
+        plt.plot(fhist.history["val_acc"], label="valid_acc")
+        plt.legend()
+        plt.title("ACCURACY")
+        plt.show()
+        y_pred = smodel.predict(x_data)
+        plt.scatter(y_data,y_pred,s=1)
+        plt.plot(y_data,y_data)
+        plt.xlabel("True")
+        plt.ylabel("Pred")
+        plt.show()
+        yn = input("현재 모델을 저장하시겠습니까(y/n)? 기존모델은 백업본으로 기록됩니다.")
+        if yn=="y":
+            paths = "./%s/%s" % (train_type + "save", self.coinname)
+            if not os.path.exists(paths):
+                os.makedirs(paths)  # 여러개의 디렉토리 생성
+            else:
+                print(os.listdir(paths))#디렉토리 목록 출력후 기존데이터 백업본으로 생성
+            smodel.save("/{}_{}_{}.keras".format(self.coinname,self.timestepstr,date.today()))
+
     def upgrade_train(self):
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요")
         if passwd != "5678":
@@ -134,26 +178,36 @@ class UserService():
 
 
 if "__main__"==__name__:
-    # print("전처리 main 실행")
-    # # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
-    # #receive_data()
-    # data_sets,target_name,req_time = receive_data(req_time=1,getcnt=1000)
-    # #data_sets,target_name,req_time = receive_data(req_time="months",getcnt=500)
-    # print("수신된 데이터: 수량",len(data_sets),\
-    #       " 이름:",target_name," 시간대:",req_time)
-    # print("현재가격:",data_sets[-1]["trade_price"])
-    # pre_datasets,recovery_price = preData(data_sets)#정규화가격정보,복구가격편차및평균
-    # x_data,y_data = split_xyData(pre_datasets, 5)
-    # #데이터 정합성 검증
-    # print(x_data.shape,y_data.shape)
-    # print(y_data[0][-1]==x_data[1][4][-1])
-    # print(y_data[-2][-1] == x_data[-1][4][-1])
-    # #가격복구 테스트
-    # recprice = recovery_info(y_data[:5], recovery_price)
-    # print("가격복구정보",recprice)
-    #타입스텝은 장기, 중기, 단기로 픽스
-    data_sets, target_name, req_time = predict_service()
-    print(len(data_sets))
-    print(target_name)
-    print(req_time)
-    preData(data_sets,target_name)
+    #createModel_conv,createModel_lstm,createCallback
+    COIN_NAME="BTC"
+    TIME_STEP_STR = "middle"
+    REQ_TIME="days"
+    MODEL_TYPE="lstm"
+    lstm_admin = ConfingData(coinname=COIN_NAME,timestepstr=TIME_STEP_STR,req_time=REQ_TIME)
+    lstm_model = createModel_lstm(TIME_STEP_STR)
+    cbs = createCallback(COIN_NAME)
+    lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=20,batsize=None)
+
+    # # print("전처리 main 실행")
+    # # # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
+    # # #receive_data()
+    # # data_sets,target_name,req_time = receive_data(req_time=1,getcnt=1000)
+    # # #data_sets,target_name,req_time = receive_data(req_time="months",getcnt=500)
+    # # print("수신된 데이터: 수량",len(data_sets),\
+    # #       " 이름:",target_name," 시간대:",req_time)
+    # # print("현재가격:",data_sets[-1]["trade_price"])
+    # # pre_datasets,recovery_price = preData(data_sets)#정규화가격정보,복구가격편차및평균
+    # # x_data,y_data = split_xyData(pre_datasets, 5)
+    # # #데이터 정합성 검증
+    # # print(x_data.shape,y_data.shape)
+    # # print(y_data[0][-1]==x_data[1][4][-1])
+    # # print(y_data[-2][-1] == x_data[-1][4][-1])
+    # # #가격복구 테스트
+    # # recprice = recovery_info(y_data[:5], recovery_price)
+    # # print("가격복구정보",recprice)
+    # #타입스텝은 장기, 중기, 단기로 픽스
+    # data_sets, target_name, req_time = predict_service()
+    # print(len(data_sets))
+    # print(target_name)
+    # print(req_time)
+    # preData(data_sets,target_name)

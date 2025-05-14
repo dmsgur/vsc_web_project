@@ -16,6 +16,7 @@ def split_xyData(pre_datasets,step="middle"):
         short - 30개씩 분리 middle - 60개씩 분리 long - 90개씩 분리
         llong - 180개씩 분리
             type : str
+    ret > return np.array(x_data),np.array(y_data)
 4. 스케일링된 가격 복원
 def recovery_info(pred_data,coinname):
     pred_data : 스케일링 적용 예측된 가격정보
