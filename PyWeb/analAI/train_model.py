@@ -164,7 +164,7 @@ class ConfingData():
             else:
                 prebak = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}.+\.bak', f)]
                 if len(prebak):
-                    os.remove(paths+"/"+prebak)
+                    os.remove(paths+"/"+prebak[0])
                 premodel = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}.+\.keras',f)]
                 if len(premodel):
                     os.rename(paths+"/"+premodel[0],paths+"/"+premodel[0].split(".")[0]+".bak")
