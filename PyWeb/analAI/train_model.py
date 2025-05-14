@@ -163,9 +163,9 @@ class ConfingData():
             if not os.path.exists(paths):
                 os.makedirs(paths)  # 여러개의 디렉토리 생성
             else:
-                for file in glob.glob("*.bak"):
+                for file in glob.glob(f"*_{self.timestepstr}_*.bak"):
                     os.remove(file)
-                premodel = [f for f in os.listdir(paths) if re.match('.+\.keras',f)]
+                premodel = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}.+\.keras',f)]
                 os.rename(premodel[0],premodel[0].split(".")[0]+".bak")
             smodel.save(paths+"/{}_{}_{}.keras".format(self.coinname,self.timestepstr,date.today()))
 
@@ -192,7 +192,7 @@ if "__main__"==__name__:
     lstm_admin = ConfingData(coinname=COIN_NAME,timestepstr=TIME_STEP_STR,req_time=REQ_TIME)
     lstm_model = createModel_lstm(TIME_STEP_STR)
     cbs = createCallback(COIN_NAME)
-    lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=20,batsize=None)
+    lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=5,batsize=None)
 
     # # print("전처리 main 실행")
     # # # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
