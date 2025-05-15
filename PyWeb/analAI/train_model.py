@@ -54,17 +54,19 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
     #pass #주소로부터 데이터 수신
 def createScaler(coinname,pdata_sets=None):
     scalers = []
-    paths = f"./config/{coinname}_scaler"
+    paths = f"./configs/{coinname}_scaler"
     if os.path.exists(paths):
         with open(paths, "rb") as fp:
             scalers = pickle.load(fp)
     else:
-        if pdata_sets:
-            for i in range(pdata_sets.shape[1]):
-                scalers.append({"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()})
-            with open(paths,"wb") as fp:
-                pickle.dump(scalers,fp)
-        else : print("최초에는 데이터셋을 입력해야 합니다.")
+      if pdata_sets is not None:
+          if not os.path.exists("./configs"):
+            os.mkdir("./configs")
+          for i in range(pdata_sets.shape[1]):
+              scalers.append({"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()})
+          with open(paths,"wb") as fp:
+              pickle.dump(scalers,fp)
+      else : print("최초에는 데이터셋을 입력해야 합니다.")
     return scalers
 def preData(data_sets,coinname):
     pdata_sets = np.array([[d['opening_price'],d['high_price'],d['low_price'],d['candle_acc_trade_volume'],d['trade_price']]\
@@ -186,20 +188,22 @@ class ConfingData():
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요")
         if passwd != "5678":
             return
+
+
 class UserService():
-    def pred_service(self,coinname="BTC",timestepstr="middle",req_time="days",train_type="lstm"):
+    def pred_service(self, coinname="BTC", timestepstr="middle", req_time="days", train_type="lstm"):
         print("예측을 시작합니다.")
         paths = "./%s/%s" % (train_type + "save", coinname)
         model_list = [f for f in os.listdir(paths) if re.match(f'.+{timestepstr}_{req_time}.+\.keras', f)]
         # print(model_list)
-        load_model=None
-        if len(model_list):#pass
-            load_model = tf.keras.models.load_model(paths+"/"+model_list[0])
-        else :
+        load_model = None
+        if len(model_list):  # pass
+            load_model = tf.keras.models.load_model(paths + "/" + model_list[0])
+        else:
             print("해당 모델이 아직 존재하지 않습니다.")
             return
-        pred_timestep=0
-        #기존 데이터 5개 오차율 검증
+        pred_timestep = 0
+        # 기존 데이터 5개 오차율 검증
         if timestepstr == "short":
             pred_timestep = 30
         elif timestepstr == "long":
@@ -209,35 +213,36 @@ class UserService():
         else:
             pred_timestep = 60
         data_sets, target_name = receive_data(target_name=coinname, req_time=req_time,
-                                              getcnt=pred_timestep+6)
+                                              getcnt=pred_timestep + 6)
         print(target_name, ":수신데이터수량:", len(data_sets))
+        print(data_sets[-1])
         preprocessed_sets = preData(data_sets, coinname)
         print(target_name, "데이터 전처리가 완료됨")
         x_data, y_data = split_xyData(preprocessed_sets, step=timestepstr)
-        print("기존 예측셋")
-        print(x_data.shape,y_data.shape)
-        #사용자 데이터 예측
-        user_sets,tarname = predict_service(target_name=coinname, req_time=req_time, pred_step=timestepstr)
-        # print(len(user_sets))
-        # print(tarname)
-        x_user = preData(user_sets, coinname)
-        print(type(x_user))
+
+        # 사용자 데이터 예측
+        x_user = np.concatenate((x_data[-1][1:], np.array([y_data[-1]])))
+        print(x_user.shape)
         print(coinname, "데이터 전처리가 완료됨")
+
         if load_model:
             y_pred = load_model.predict(x_data)
-            # print(y_pred.shape)
-            # print(y_data.shape)
-            pred_avgrat = np.abs((1-(y_pred/y_data))).mean(axis=1)*100
-            print("==========",pred_avgrat.shape)
+            loss, acc = load_model.evaluate(x_data, y_data)
+            y_pred = recovery_info(y_pred, coinname)
+            y_data = recovery_info(y_data, coinname)
+            print(y_pred.shape)
+            print(y_data.shape)
+            pred_avgrat = np.abs(((y_pred / y_data) - 1)).mean(axis=0) * 100
             user_pred = load_model.predict(np.array([x_user]))
             # print(y_pred.shape)
             rec_pred = recovery_info(user_pred, coinname)
-            #opening_price,high_price,low_price,candle_acc_trade_volume,trade_price
-            print(f"opening_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0]:.2f}%")
-            print(f"high_price pred:{rec_pred[0][1]:.4f}",f"recentry err rate:{pred_avgrat[1]:.2f}%")
-            print(f"low_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[2]:.2f}%")
-            print(f"candle_acc_trade_volume pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[3]:.2f}%")
-            print(f"trade_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[4]:.2f}%")
+            # opening_price,high_price,low_price,candle_acc_trade_volume,trade_price
+            print(f"현재 모델의 측정 오차는 {loss:.4f} 측정 정확율은 {acc * 100 - 0.01:.2f}% 입니다.")
+            print(f"opening_price pred:{rec_pred[0][0]:.4f}", f"recentry err rate:{pred_avgrat[0]:.2f}%")
+            print(f"high_price pred:{rec_pred[0][1]:.4f}", f"recentry err rate:{pred_avgrat[1]:.2f}%")
+            print(f"low_price pred:{rec_pred[0][0]:.4f}", f"recentry err rate:{pred_avgrat[2]:.2f}%")
+            print(f"candle_acc_trade_volume pred:{rec_pred[0][0]:.4f}", f"recentry err rate:{pred_avgrat[3]:.2f}%")
+            print(f"trade_price pred:{rec_pred[0][0]:.4f}", f"recentry err rate:{pred_avgrat[4]:.2f}%")
 
 
 
@@ -247,16 +252,22 @@ class UserService():
 
 
 if "__main__"==__name__:
-    #createModel_conv,createModel_lstm,createCallback
-    #lstm 모델 생성
-    # COIN_NAME="BTC"
-    # TIME_STEP_STR = "middle"
-    # REQ_TIME="days"
-    # MODEL_TYPE="lstm"
-    # lstm_admin = ConfingData(coinname=COIN_NAME,timestepstr=TIME_STEP_STR,req_time=REQ_TIME)
-    # lstm_model = createModel_lstm(TIME_STEP_STR)
-    # cbs = createCallback(COIN_NAME)
-    # lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=5,batsize=None)
+    # createModel_conv,createModel_lstm,createCallback
+    # 1. ==========환경설정
+    COIN_NAME = "BTC"
+    # short middle long llong
+    TIME_STEP_STR = "middle"  # 변경
+    # months, weeks, days ,  분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
+    REQ_TIME = "days"  # 변경
+
+    # 2. ========== lstm 모델 최초 훈련()
+    MODEL_TYPE = "lstm"
+    lstm_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
+    lstm_model = createModel_lstm(TIME_STEP_STR)
+    cbs = createCallback(COIN_NAME)
+    lstm_admin.init_train(train_type=MODEL_TYPE, smodel=lstm_model, cbs=cbs, epoch=100, batsize=None)
+
+    # 3. =========== conv1D 모델 최초 훈련
     # conv 모델 생성
     # MODEL_TYPE = "conv"
     # conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
@@ -287,7 +298,7 @@ if "__main__"==__name__:
     # print(req_time)
     # preData(data_sets,target_name)
 
-    #사용자 예측값 출력
-    user = UserService()
-    user.pred_service(coinname="BTC",train_type="lstm",timestepstr="middle",req_time="days")
+    # 4. ======== 사용자 예측값 출력
+    # user = UserService()
+    # user.pred_service(coinname="BTC",train_type="lstm",timestepstr="middle",req_time="days")
 

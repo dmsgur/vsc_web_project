@@ -38,7 +38,7 @@ def createModel_conv(pred_step):
     conv_model.add(Dense(1,activation="sigmoid"))
     conv_model.add(Reshape((-1,)))
     conv_model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                       optimizer=tf.keras.optimizers.Adam(),
+                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005,beta_1=0.7),
                        metrics=["acc"])
     return conv_model
 
@@ -51,6 +51,14 @@ def createModel_lstm(pred_step):
     else : outputsize=60
     lstm_model = Sequential()
     lstm_model.add(Input((outputsize,5)))
+    lstm_model.add(LSTM(
+        256,
+        dropout=0.3,
+        recurrent_dropout=0.2,
+        seed=123,
+        return_sequences=True,
+        go_backwards=True,
+    ))
     lstm_model.add(LSTM(
         128,
         dropout=0.3,
