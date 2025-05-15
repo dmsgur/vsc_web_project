@@ -23,22 +23,26 @@ def createModel_conv(pred_step):
     conv_model.add(Input((outputsize,5)))
     conv_model.add(Reshape((outputsize,5,1)))
     conv_model.add(ConvLSTM1D(
-    8,3, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
+    16,3, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
     return_sequences=True,go_backwards=True))
+    # conv_model.add(ConvLSTM1D(
+    # 32,5, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
+    # return_sequences=True,go_backwards=True))
     conv_model.add(ConvLSTM1D(
-    32,5, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
-    return_sequences=True,go_backwards=True))
-    conv_model.add(ConvLSTM1D(
-    128,5, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
+    64,5, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
     return_sequences=False))
+    conv_model.add(MaxPool1D(pool_size=2,strides=1,padding="same"))
+    conv_model.add(Dropout(0.5))
     conv_model.add(Dense(256,activation="relu"))
-    conv_model.add(Dropout(0.4))
+    conv_model.add(Dropout(0.5))
     conv_model.add(Dense(64,activation="relu"))
+    conv_model.add(Dropout(0.4))
     conv_model.add(Dense(32,activation="relu"))
-    conv_model.add(Dense(1,activation="sigmoid"))
+    conv_model.add(Dropout(0.3))
+    conv_model.add(Dense(1,activation="linear"))
     conv_model.add(Reshape((-1,)))
     conv_model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005,beta_1=0.7),
+                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005,beta_1=0.5),
                        metrics=["acc"])
     return conv_model
 
@@ -53,16 +57,16 @@ def createModel_lstm(pred_step):
     lstm_model.add(Input((outputsize,5)))
     lstm_model.add(LSTM(
         256,
-        dropout=0.3,
-        recurrent_dropout=0.2,
+        dropout=0.4,
+        recurrent_dropout=0.3,
         seed=123,
         return_sequences=True,
         go_backwards=True,
     ))
     lstm_model.add(LSTM(
         128,
-        dropout=0.3,
-        recurrent_dropout=0.2,
+        dropout=0.4,
+        recurrent_dropout=0.3,
         seed=123,
         return_sequences=True,
         go_backwards=True,
@@ -72,11 +76,12 @@ def createModel_lstm(pred_step):
         seed=123
     ))
     lstm_model.add(Dense(128,activation="relu"))
-    lstm_model.add(Dropout(0.3))
+    lstm_model.add(Dropout(0.4))
     lstm_model.add(Dense(32,activation="relu"))
-    lstm_model.add(Dense(5,activation="sigmoid"))
+    lstm_model.add(Dropout(0.3))
+    lstm_model.add(Dense(5,activation="linear"))
     lstm_model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005,beta_1=0.7),
+                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005,beta_1=0.5),
                        metrics=["acc"])
     return lstm_model
 def createCallback(coinname,modeltype=None):
