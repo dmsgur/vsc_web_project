@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import os
 import re
 from datetime import date
+import tensorflow as tf
 from lstm_and_conv import createModel_conv,createModel_lstm,createCallback
 NAME_URL = r"https://api.bithumb.com/v1/market/all"
 MAIN_URL = r"https://api.bithumb.com/v1/candles/"
@@ -51,17 +52,19 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
     return data_sets,target_name
     # requests.get()
     #pass #주소로부터 데이터 수신
-def createScaler(coinname,pdata_sets):
+def createScaler(coinname,pdata_sets=None):
     scalers = []
     paths = f"./config/{coinname}_scaler"
     if os.path.exists(paths):
         with open(paths, "rb") as fp:
             scalers = pickle.load(fp)
     else:
-        for i in range(pdata_sets.shape[1]):
-            scalers.append({"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()})
-        with open(paths,"wb") as fp:
-            pickle.dump(scalers,fp)
+        if pdata_sets:
+            for i in range(pdata_sets.shape[1]):
+                scalers.append({"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()})
+            with open(paths,"wb") as fp:
+                pickle.dump(scalers,fp)
+        else : print("최초에는 데이터셋을 입력해야 합니다.")
     return scalers
 def preData(data_sets,coinname):
     pdata_sets = np.array([[d['opening_price'],d['high_price'],d['low_price'],d['candle_acc_trade_volume'],d['trade_price']]\
@@ -103,8 +106,10 @@ def predict_service(target_name="BTC",req_time="days",pred_step="middle"):
         minutetime = req_time
         req_time = "minutes/" + str(req_time)
     # yyyy-MM-dd HH:mm:ss
-    params = {"market": "KRW-" + target_name,  "count": pred_timestep}
+    print(target_name)
+    params = {"market": "KRW-" + target_name,  "count": str(pred_timestep)}
     result = requests.get(MAIN_URL + req_time, params)
+    # print(result.url)
     res = result.json()
     res.reverse()
     data_sets = [o for o in res if not o["candle_date_time_kst"] in date_datas]
@@ -182,27 +187,52 @@ class ConfingData():
         if passwd != "5678":
             return
 class UserService():
-    def __init__(self,coinname="BTC",timestepstr="middle",req_time="days"):
-        self.coinname=coinname
-        self.timestepstr = timestepstr
-        self.req_time=req_time
-    def pred_service(self):
+    def pred_service(self,coinname="BTC",timestepstr="middle",req_time="days",train_type="lstm"):
         print("예측을 시작합니다.")
-        predict_service(target_name="BTC", req_time="days", pred_step="middle")
+        paths = "./%s/%s" % (train_type + "save", coinname)
+        model_list = [f for f in os.listdir(paths) if re.match(f'.+{timestepstr}_{req_time}.+\.keras', f)]
+        # print(model_list)
+        load_model=None
+        if len(model_list):#pass
+            load_model = tf.keras.models.load_model(paths+"/"+model_list[0])
+        else :
+            print("해당 모델이 아직 존재하지 않습니다.")
+            return
+        data_sets,tarname = predict_service(target_name=coinname, req_time=req_time, pred_step=timestepstr)
+        # print(len(data_sets))
+        # print(tarname)
+        x_user = preData(data_sets, coinname)
+        print(type(x_user))
+        print(coinname, "데이터 전처리가 완료됨")
+        if load_model:
+            y_pred = load_model.predict(np.array([x_user]))
+            # print(y_pred.shape)
+            rec_pred = recovery_info(y_pred, coinname)
+            #opening_price,high_price,low_price,candle_acc_trade_volume,trade_price
+            print("opening_price:",rec_pred[0])
+            print("high_price:",rec_pred[1])
+            print("low_price:",rec_pred[2])
+            print("candle_acc_trade_volume:",rec_pred[3])
+            print("trade_price:",rec_pred[4])
+
+
+
+
+
 
 
 
 if "__main__"==__name__:
     #createModel_conv,createModel_lstm,createCallback
     #lstm 모델 생성
-    COIN_NAME="BTC"
-    TIME_STEP_STR = "middle"
-    REQ_TIME="days"
-    MODEL_TYPE="lstm"
-    lstm_admin = ConfingData(coinname=COIN_NAME,timestepstr=TIME_STEP_STR,req_time=REQ_TIME)
-    lstm_model = createModel_lstm(TIME_STEP_STR)
-    cbs = createCallback(COIN_NAME)
-    lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=5,batsize=None)
+    # COIN_NAME="BTC"
+    # TIME_STEP_STR = "middle"
+    # REQ_TIME="days"
+    # MODEL_TYPE="lstm"
+    # lstm_admin = ConfingData(coinname=COIN_NAME,timestepstr=TIME_STEP_STR,req_time=REQ_TIME)
+    # lstm_model = createModel_lstm(TIME_STEP_STR)
+    # cbs = createCallback(COIN_NAME)
+    # lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=5,batsize=None)
     # conv 모델 생성
     # MODEL_TYPE = "conv"
     # conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
@@ -232,3 +262,8 @@ if "__main__"==__name__:
     # print(target_name)
     # print(req_time)
     # preData(data_sets,target_name)
+
+    #사용자 예측값 출력
+    user = UserService()
+    user.pred_service(coinname="BTC",train_type="lstm",timestepstr="middle",req_time="days")
+
