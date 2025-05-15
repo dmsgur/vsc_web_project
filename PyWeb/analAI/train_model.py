@@ -233,11 +233,11 @@ class UserService():
             # print(y_pred.shape)
             rec_pred = recovery_info(user_pred, coinname)
             #opening_price,high_price,low_price,candle_acc_trade_volume,trade_price
-            print(f"opening_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0][0]:.2f}%")
-            print(f"high_price pred:{rec_pred[0][1]:.4f}",f"recentry err rate:{pred_avgrat[0][1]:.2f}%")
-            print(f"low_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0][2]:.2f}%")
-            print(f"candle_acc_trade_volume pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0][3]:.2f}%")
-            print(f"trade_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0][4]:.2f}%")
+            print(f"opening_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0]:.2f}%")
+            print(f"high_price pred:{rec_pred[0][1]:.4f}",f"recentry err rate:{pred_avgrat[1]:.2f}%")
+            print(f"low_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[2]:.2f}%")
+            print(f"candle_acc_trade_volume pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[3]:.2f}%")
+            print(f"trade_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[4]:.2f}%")
 
 
 
