@@ -107,9 +107,7 @@ def predict_service(target_name="BTC",req_time="days",pred_step="middle"):
     result = requests.get(MAIN_URL + req_time, params)
     res = result.json()
     res.reverse()
-    data_sets = [o for o in res if not o["candle_date_time_kst"] in date_datas] + data_sets
-    # minutes , days, weeks, months
-    date_datas.extend([o["candle_date_time_kst"] for o in res])
+    data_sets = [o for o in res if not o["candle_date_time_kst"] in date_datas]
     return data_sets, target_name
 class ConfingData():
     def __init__(self,coinname="BTC",timestepstr="middle",req_time="days"):
@@ -158,13 +156,13 @@ class ConfingData():
             if not os.path.exists(paths):
                 os.makedirs(paths)  # 여러개의 디렉토리 생성
             else:
-                prebak = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}.+\.bak', f)]
+                prebak = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.req_time}.+\.bak', f)]
                 if len(prebak):
                     os.remove(paths+"/"+prebak[0])
-                premodel = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}.+\.keras',f)]
+                premodel = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.req_time}.+\.keras',f)]
                 if len(premodel):
                     os.rename(paths+"/"+premodel[0],paths+"/"+premodel[0].split(".")[0]+".bak")
-            smodel.save(paths+"/{}_{}_{}.keras".format(self.coinname,self.timestepstr,date.today()))
+            smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.req_time,date.today()))
 
     def upgrade_train(self):
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요")
@@ -177,6 +175,7 @@ class UserService():
         self.req_time=req_time
     def pred_service(self):
         print("예측을 시작합니다.")
+        predict_service(target_name="BTC", req_time="days", pred_step="middle")
 
 
 
