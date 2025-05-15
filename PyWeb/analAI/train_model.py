@@ -164,13 +164,18 @@ class ConfingData():
             premodel = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.req_time}.+\.keras',f)]
             if len(premodel):
                 os.rename(paths+"/"+premodel[0],paths+"/"+premodel[0].split(".")[0]+".bak")
-        smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.req_time,date.today()))
-        if os.path.exists(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today())):
-            os.remove(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today()))
-        if os.path.exists(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today())):
-            os.remove(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today()))
-        os.rename(paths+"/tmp1.png", paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today()))
-        os.rename(paths + "/tmp2.png",paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today()))
+            smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.req_time,date.today()))
+            if os.path.exists(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today())):
+                os.remove(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today()))
+            if os.path.exists(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today())):
+                os.remove(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today()))
+            os.rename(paths+"/tmp1.png", paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today()))
+            os.rename(paths + "/tmp2.png",paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today()))
+        else :
+            if os.path.exists(paths + "/tmp1.png"):
+                os.remove(paths + "/tmp1.png")
+            if os.path.exists(paths + "/tmp2.png"):
+                os.remove(paths + "/tmp2.png")
 
     def upgrade_train(self):
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요")
@@ -194,16 +199,16 @@ if "__main__"==__name__:
     TIME_STEP_STR = "middle"
     REQ_TIME="days"
     MODEL_TYPE="lstm"
-    # lstm_admin = ConfingData(coinname=COIN_NAME,timestepstr=TIME_STEP_STR,req_time=REQ_TIME)
-    # lstm_model = createModel_lstm(TIME_STEP_STR)
-    # cbs = createCallback(COIN_NAME)
-    # lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=5,batsize=None)
-    # conv 모델 생성
-    MODEL_TYPE = "conv"
-    conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
-    conv_model = createModel_conv(TIME_STEP_STR)
+    lstm_admin = ConfingData(coinname=COIN_NAME,timestepstr=TIME_STEP_STR,req_time=REQ_TIME)
+    lstm_model = createModel_lstm(TIME_STEP_STR)
     cbs = createCallback(COIN_NAME)
-    conv_admin.init_train(train_type=MODEL_TYPE, smodel=conv_model, cbs=cbs, epoch=5, batsize=None)
+    lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=5,batsize=None)
+    # conv 모델 생성
+    # MODEL_TYPE = "conv"
+    # conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
+    # conv_model = createModel_conv(TIME_STEP_STR)
+    # cbs = createCallback(COIN_NAME)
+    # conv_admin.init_train(train_type=MODEL_TYPE, smodel=conv_model, cbs=cbs, epoch=5, batsize=None)
     # # print("전처리 main 실행")
     # # # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
     # # #receive_data()
