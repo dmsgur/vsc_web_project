@@ -198,22 +198,46 @@ class UserService():
         else :
             print("해당 모델이 아직 존재하지 않습니다.")
             return
-        data_sets,tarname = predict_service(target_name=coinname, req_time=req_time, pred_step=timestepstr)
-        # print(len(data_sets))
+        pred_timestep=0
+        #기존 데이터 5개 오차율 검증
+        if timestepstr == "short":
+            pred_timestep = 30
+        elif timestepstr == "long":
+            pred_timestep = 90
+        elif timestepstr == "llong":
+            pred_timestep = 180
+        else:
+            pred_timestep = 60
+        data_sets, target_name = receive_data(target_name=coinname, req_time=req_time,
+                                              getcnt=pred_timestep+6)
+        print(target_name, ":수신데이터수량:", len(data_sets))
+        preprocessed_sets = preData(data_sets, coinname)
+        print(target_name, "데이터 전처리가 완료됨")
+        x_data, y_data = split_xyData(preprocessed_sets, step=timestepstr)
+        print("기존 예측셋")
+        print(x_data.shape,y_data.shape)
+        #사용자 데이터 예측
+        user_sets,tarname = predict_service(target_name=coinname, req_time=req_time, pred_step=timestepstr)
+        # print(len(user_sets))
         # print(tarname)
-        x_user = preData(data_sets, coinname)
+        x_user = preData(user_sets, coinname)
         print(type(x_user))
         print(coinname, "데이터 전처리가 완료됨")
         if load_model:
-            y_pred = load_model.predict(np.array([x_user]))
+            y_pred = load_model.predict(x_data)
             # print(y_pred.shape)
-            rec_pred = recovery_info(y_pred, coinname)
+            # print(y_data.shape)
+            pred_avgrat = (1-(y_pred/y_data)).mean(axis=1)
+            print("==========",pred_avgrat.shape)
+            user_pred = load_model.predict(np.array([x_user]))
+            # print(y_pred.shape)
+            rec_pred = recovery_info(user_pred, coinname)
             #opening_price,high_price,low_price,candle_acc_trade_volume,trade_price
-            print("opening_price:",rec_pred[0])
-            print("high_price:",rec_pred[1])
-            print("low_price:",rec_pred[2])
-            print("candle_acc_trade_volume:",rec_pred[3])
-            print("trade_price:",rec_pred[4])
+            print(f"opening_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0][0]:.2f}%")
+            print(f"high_price pred:{rec_pred[0][1]:.4f}",f"recentry err rate:{pred_avgrat[0][1]:.2f}%")
+            print(f"low_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0][2]:.2f}%")
+            print(f"candle_acc_trade_volume pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0][3]:.2f}%")
+            print(f"trade_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0][4]:.2f}%")
 
 
 
