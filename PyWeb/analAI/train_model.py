@@ -227,7 +227,7 @@ class UserService():
             y_pred = load_model.predict(x_data)
             # print(y_pred.shape)
             # print(y_data.shape)
-            pred_avgrat = (1-(y_pred/y_data)).mean(axis=1)
+            pred_avgrat = np.abs((1-(y_pred/y_data))).mean(axis=1)*100
             print("==========",pred_avgrat.shape)
             user_pred = load_model.predict(np.array([x_user]))
             # print(y_pred.shape)
