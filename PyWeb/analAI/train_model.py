@@ -159,15 +159,15 @@ class ConfingData():
         if yn=="y":
             prebak = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.req_time}.+\.bak', f)]
             if len(prebak):
-                if not os.path.exists(paths+"/"+prebak[0]):
+                if os.path.exists(paths+"/"+prebak[0]):
                     os.remove(paths+"/"+prebak[0])
             premodel = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.req_time}.+\.keras',f)]
             if len(premodel):
                 os.rename(paths+"/"+premodel[0],paths+"/"+premodel[0].split(".")[0]+".bak")
         smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.req_time,date.today()))
-        if not os.path.exists(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today())):
+        if os.path.exists(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today())):
             os.remove(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today()))
-        if not os.path.exists(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today())):
+        if os.path.exists(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today())):
             os.remove(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today()))
         os.rename(paths+"/tmp1.png", paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today()))
         os.rename(paths + "/tmp2.png",paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today()))
