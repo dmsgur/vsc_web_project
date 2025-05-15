@@ -119,6 +119,7 @@ class ConfingData():
         if passwd != "1234":
             return
         getnct = input("최초 훈련으로 얻어올 데이터의 수량을 입력하세요")
+        paths = "./%s/%s" % (train_type + "save", self.coinname)
         data_sets,target_name=receive_data(target_name=self.coinname,req_time= self.req_time, getcnt=int(getnct) if getnct else None)
         print(target_name,":수신데이터수량:",len(data_sets))
         preprocessed_sets = preData(data_sets, self.coinname)
@@ -143,16 +144,17 @@ class ConfingData():
         plt.plot(fhist.history["val_acc"], label="valid_acc")
         plt.legend()
         plt.title("ACCURACY")
+        plt.savefig(paths+"/tmp1.png")
         plt.show()
         y_pred = smodel.predict(x_data)
         plt.scatter(y_data,y_pred,s=1)
         plt.plot(y_data,y_data)
         plt.xlabel("True")
         plt.ylabel("Pred")
+        plt.savefig(paths + "/tmp2.png")
         plt.show()
         yn = input("현재 모델을 저장하시겠습니까(y/n)? 기존모델은 백업본으로 기록됩니다.")
         if yn=="y":
-            paths = "./%s/%s" % (train_type + "save", self.coinname)
             if not os.path.exists(paths):
                 os.makedirs(paths)  # 여러개의 디렉토리 생성
             else:
@@ -163,6 +165,11 @@ class ConfingData():
                 if len(premodel):
                     os.rename(paths+"/"+premodel[0],paths+"/"+premodel[0].split(".")[0]+".bak")
             smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.req_time,date.today()))
+            os.remove(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today()))
+            os.remove(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,                                                             date.today()))
+            os.rename(paths+"/tmp1.png", paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today()))
+            os.rename(paths + "/tmp2.png",paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today()))
+
 
     def upgrade_train(self):
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요")
