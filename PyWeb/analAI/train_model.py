@@ -12,6 +12,11 @@ import tensorflow as tf
 from lstm_and_conv import createModel_conv,createModel_lstm,createCallback
 NAME_URL = r"https://api.bithumb.com/v1/market/all"
 MAIN_URL = r"https://api.bithumb.com/v1/candles/"
+SHORT = 30
+MIDDLE = 60
+LONG = 90
+LLONG = 180
+
 # https://api.bithumb.com/v1/candles/minutes/{unit}
 # https://api.bithumb.com/v1/candles/days
 # https: // api.bithumb.com / v1 / candles / weeks
@@ -24,7 +29,7 @@ for unit in resobj:
     n = unit["market"].split("-")[1]
     names[n]=[unit["english_name"],unit["korean_name"]]
 print(names)
-def receive_data(target_name="BTC",req_time="days",getcnt=200):
+def receive_data(target_name="BTC",req_time="days",getcnt=200,last_date_time=None):
     # <--- 끝날짜에서 전방으로 200개씩
     dt=None
     data_sets=[]# 최근데이터를 맨 뒤로 보냄
@@ -39,7 +44,7 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
         params = {"market":"KRW-"+target_name,"to":dt,"count":getcnt}
         result = requests.get(MAIN_URL+req_time,params)
         res = result.json()
-        res.reverse()
+        res.reverse()#최근이 맨뒤
         if not res:
             break
         dt = datetime.strptime(res[0]["candle_date_time_kst"], "%Y-%m-%dT%H:%M:%S")
@@ -48,7 +53,16 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200):
         if minutetime:
             dt = dt - timedelta(minutes=minutetime-1)
         date_datas.extend([ o["candle_date_time_kst"] for o in res ])
-        if len(data_sets)>=getcnt:break
+        if last_date_time is not None:
+            print("진입점xxxxxxxxxxxxxx수정중")
+            fdate_time = datetime.strptime(data_sets[0]["candle_date_time_kst"],"%Y-%m-%dT%H:%M:%S")
+            if fdate_time<=last_date_time:
+                fix = next(i for i, o in enumerate(data_sets) if last_date_time < datetime.strptime(o["candle_date_time_kst"],"%Y-%m-%dT%H:%M:%S"))
+                data_sets = data_sets[fix:]
+                print(date_datas[fix])
+                break
+        else:
+            if len(data_sets)>=getcnt:break
     return data_sets,target_name
     # requests.get()
     #pass #주소로부터 데이터 수신
@@ -80,10 +94,10 @@ def preData(data_sets,coinname):
     return pdata_sets,raw_sets
 def split_xyData(pre_datasets,raw_sets=None,step="middle"):
     time_step=0
-    if step=="short":time_step=30
-    elif step=="long":time_step=90
-    elif step=="llong":time_step=180
-    else : time_step=60
+    if step=="short":time_step=SHORT
+    elif step=="long":time_step=LONG
+    elif step=="llong":time_step=LLONG
+    else : time_step=MIDDLE
     x_data = []
     y_data = []
     y_raw = []
@@ -105,6 +119,9 @@ class ConfingData():
     def __init__(self,coinname="BTC",timestepstr="middle",req_time="days"):
         self.coinname=coinname
         self.timestepstr = timestepstr
+        self.name_req_time=None
+        if type(req_time) == int:
+            self.name_req_time = "mins" + str(req_time)
         self.req_time=req_time
     def init_train(self,train_type="lstm",smodel=None,cbs=None,epoch=None,batsize=None):
         passwd = input("최초 훈련을 시작합니다. 스케일러등 모든 모델은 초기화 됩니다. 비밀번호를 입력해주세요")
@@ -154,31 +171,73 @@ class ConfingData():
             premodel = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.req_time}.+\.keras',f)]
             if len(premodel):
                 os.rename(paths+"/"+premodel[0],paths+"/"+premodel[0].split(".")[0]+".bak")
-            dtstr = datetime.now().strftime("D%Y-%m-%dT%H=%M=%S")
-            smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.req_time,dtstr))
-            if os.path.exists(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,dtstr)):
-                os.remove(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,dtstr))
-            if os.path.exists(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,dtstr)):
-                os.remove(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,dtstr))
-            os.rename(paths+"/tmp1.png", paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,dtstr))
-            os.rename(paths + "/tmp2.png",paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,dtstr))
+            dtstr = datetime.now().strftime("D%Y-%m-%dT%H-%M-%S")
+            smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.name_req_time if self.name_req_time is not None else self.req_time,dtstr))
+            if os.path.exists(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.name_req_time if self.name_req_time is not None else self.req_time,dtstr)):
+                os.remove(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.name_req_time if self.name_req_time is not None else self.req_time,dtstr))
+            if os.path.exists(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.name_req_time if self.name_req_time is not None else self.req_time,dtstr)):
+                os.remove(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.name_req_time if self.name_req_time is not None else self.req_time,dtstr))
+            os.rename(paths+"/tmp1.png", paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.name_req_time if self.name_req_time is not None else self.req_time,dtstr))
+            os.rename(paths + "/tmp2.png",paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.name_req_time if self.name_req_time is not None else self.req_time,dtstr))
         else :
             if os.path.exists(paths + "/tmp1.png"):
                 os.remove(paths + "/tmp1.png")
             if os.path.exists(paths + "/tmp2.png"):
                 os.remove(paths + "/tmp2.png")
 
-    def upgrade_train(self):
+    def upgrade_train(self,train_type="lstm",epoch=None,batsize=None):
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요")
         if passwd != "5678":
             return
-        #smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.req_time,date.today()))
-        #lastdate = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.req_time}.+\.keras', f)]
+        paths = "./%s/%s" % (train_type + "save", self.coinname)
+        model_list = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.name_req_time if self.name_req_time is not None else self.req_time}.+\.keras', f)]
+        # print(model_list)
+        load_model = None
+        if len(model_list):  # pass
+            load_model = tf.keras.models.load_model(paths + "/" + model_list[0])
+            dt_var = model_list[0].split(".")[0].split("_")[3]
+            step_var = model_list[0].split(".")[0].split("_")[1]
+            last_time = datetime.strptime(dt_var,"D%Y-%m-%dT%H-%M-%S")
+            print(last_time)
+            print(step_var)
+            step_value = 0
+            if step_var=="short":
+                step_value=SHORT
+            elif step_var=="long":
+                step_value = LONG
+            elif step_var=="llong":
+                step_value = LONG
+            else : step_value=MIDDLE
+            if self.name_req_time is not None:
+                last_time - timedelta(minutes=step_value)
+                print("분")
+            elif self.req_time == "weeks":
+                last_time - timedelta(weeks=step_value)
+                print("주")
+            elif self.req_time == "months":
+                last_time=last_time - relativedelta(months=step_value)
+                print("월")
+            else :
+                last_time=last_time-timedelta(days=step_value)
+                print("일")
+                #"days"
+
+            data_sets,target_name=receive_data(target_name="BTC", req_time="days", last_date_time=last_time)
+            print(len(data_sets))
+            print(len(target_name))
+
+        else:
+            print("해당 모델이 아직 존재하지 않습니다.")
+            return
+
 class UserService():
     def pred_service(self,coinname="BTC",timestepstr="middle",req_time="days",train_type="lstm"):
+        name_req_time=None
+        if type(req_time) == int:
+            name_req_time = "mins" + str(req_time)
         print("예측을 시작합니다.")
         paths = "./%s/%s" % (train_type + "save", coinname)
-        model_list = [f for f in os.listdir(paths) if re.match(f'.+{timestepstr}_{req_time}.+\.keras', f)]
+        model_list = [f for f in os.listdir(paths) if re.match(f'.+{timestepstr}_{name_req_time if name_req_time is not None else req_time}.+\.keras', f)]
         # print(model_list)
         load_model=None
         if len(model_list):#pass
@@ -189,13 +248,13 @@ class UserService():
         pred_timestep=0
         #기존 데이터 5개 오차율 검증
         if timestepstr == "short":
-            pred_timestep = 30
+            pred_timestep = SHORT
         elif timestepstr == "long":
-            pred_timestep = 90
+            pred_timestep = LONG
         elif timestepstr == "llong":
-            pred_timestep = 180
+            pred_timestep = LLONG
         else:
-            pred_timestep = 60
+            pred_timestep = MIDDLE
         data_sets, target_name = receive_data(target_name=coinname, req_time=req_time,
                                               getcnt=pred_timestep+6)
         print(target_name, ":수신데이터수량:", len(data_sets))
@@ -263,11 +322,13 @@ if "__main__"==__name__:
 
     #3. =========== conv1D 모델 최초 훈련
     # conv 모델 생성 
-    # MODEL_TYPE = "conv"
-    # conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
-    # conv_model = createModel_conv(TIME_STEP_STR)
-    # cbs = createCallback(COIN_NAME)
-    # conv_admin.init_train(train_type=MODEL_TYPE, smodel=conv_model, cbs=cbs, epoch=100, batsize=None)
+    MODEL_TYPE = "conv"
+    conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
+    #conv_model = createModel_conv(TIME_STEP_STR)
+    #cbs = createCallback(COIN_NAME)
+    #conv_admin.init_train(train_type=MODEL_TYPE, smodel=conv_model, cbs=cbs, epoch=10, batsize=None)
+    #   upgrade
+    conv_admin.upgrade_train(train_type=MODEL_TYPE, epoch=10, batsize=None)
 
     # print("전처리 main 실행")
     # # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
@@ -290,6 +351,6 @@ if "__main__"==__name__:
 
 
     #4. ======== 사용자 예측값 출력
-    user = UserService()
-    user.pred_service(coinname="BTC",train_type="conv",timestepstr="middle",req_time="days")
+    # user = UserService()
+    # user.pred_service(coinname="BTC",train_type="conv",timestepstr="middle",req_time="days")
 
