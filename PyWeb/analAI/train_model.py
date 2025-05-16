@@ -143,16 +143,10 @@ class ConfingData():
         print("훈련이 완료되었습니다.")
         loss,acc = smodel.evaluate(x_data,y_data)
         print(f"손실: {loss:.2f} 정확률: {acc*100:.2f} %")
-        plt.subplot(1,2,1)
-        plt.plot(fhist.history["loss"],label="train_loss")
-        plt.plot(fhist.history["val_loss"], label="valid_loss")
+        plt.plot(fhist.history["loss"],label="train_MSE")
+        plt.plot(fhist.history["MAE"], label="valid_MAE")
         plt.legend()
-        plt.title("LOSSES")
-        plt.subplot(1, 2, 2)
-        plt.plot(fhist.history["acc"], label="train_acc")
-        plt.plot(fhist.history["val_acc"], label="valid_acc")
-        plt.legend()
-        plt.title("ACCURACY")
+        plt.title("MSE/MAE")
         plt.savefig(paths+"/tmp1.png")
         plt.show()
         y_pred = smodel.predict(x_data)
@@ -188,7 +182,6 @@ class ConfingData():
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요")
         if passwd != "5678":
             return
-
 
 class UserService():
     def pred_service(self, coinname="BTC", timestepstr="middle", req_time="days", train_type="lstm"):

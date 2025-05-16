@@ -23,29 +23,28 @@ def createModel_conv(pred_step):
     conv_model.add(Input((outputsize,5)))
     conv_model.add(Reshape((outputsize,5,1)))
     conv_model.add(ConvLSTM1D(
-    16,3, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
+    16,3, strides=1,padding='same',return_sequences=True,go_backwards=True))
+    conv_model.add(ConvLSTM1D(
+    32,5, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
     return_sequences=True,go_backwards=True))
-    # conv_model.add(ConvLSTM1D(
-    # 32,5, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
-    # return_sequences=True,go_backwards=True))
     conv_model.add(ConvLSTM1D(
     64,5, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
     return_sequences=False))
-    conv_model.add(MaxPool1D(pool_size=2,strides=1,padding="same"))
+    conv_model.add(MaxPool1D(pool_size=4,strides=1,padding="same"))
     conv_model.add(BatchNormalization())
-    conv_model.add(Dropout(0.5))
-    conv_model.add(Dense(256,activation="relu"))
-    conv_model.add(Dropout(0.5))
-    conv_model.add(Dense(64,activation="relu"))
     conv_model.add(Dropout(0.4))
-    conv_model.add(Dense(32,activation="relu"))
+    conv_model.add(Dense(512,activation="relu"))
     conv_model.add(BatchNormalization())
+    conv_model.add(Dropout(0.4))
+    conv_model.add(Dense(256,activation="relu"))
     conv_model.add(Dropout(0.3))
+    conv_model.add(Dense(64,activation="relu"))
+    conv_model.add(BatchNormalization())
     conv_model.add(Dense(1,activation="linear"))
     conv_model.add(Reshape((-1,)))
     conv_model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005,beta_1=0.5),
-                       metrics=["acc"])
+                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005, beta_1=0.5),
+                       metrics=["MAE"])
     return conv_model
 
 
@@ -83,8 +82,8 @@ def createModel_lstm(pred_step):
     lstm_model.add(Dropout(0.3))
     lstm_model.add(Dense(5,activation="linear"))
     lstm_model.compile(loss=tf.keras.losses.MeanSquaredError(),
-                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005,beta_1=0.5),
-                       metrics=["acc"])
+                       optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005, beta_1=0.5),
+                       metrics=["MAE"])
     return lstm_model
 def createCallback(coinname,modeltype=None):
     #'./lstmsave/BTC/2025-05-13'
@@ -92,8 +91,8 @@ def createCallback(coinname,modeltype=None):
     # paths ="./%s/%s/%s"%(modeltype+"save",coinname,date.today())
     # if not os.path.exists(paths):
     #     os.makedirs(paths)#여러개의 디렉토리 생성
-    es = tf.keras.callbacks.EarlyStopping(monitor='val_loss',\
-                                          patience=30,mode='min', \
+    es = tf.keras.callbacks.EarlyStopping(monitor='loss', verbose=1, \
+                                          patience=20, mode='min', \
                                           restore_best_weights=True)
     # mcp = tf.keras.callbacks.ModelCheckpoint(
     #     "./%s/%s/%s/%s_{epoch:02d}-{val_loss:.2f}.keras"%\
