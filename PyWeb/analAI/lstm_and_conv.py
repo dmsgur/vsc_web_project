@@ -91,7 +91,7 @@ def createCallback(coinname,modeltype=None):
     # paths ="./%s/%s/%s"%(modeltype+"save",coinname,date.today())
     # if not os.path.exists(paths):
     #     os.makedirs(paths)#여러개의 디렉토리 생성
-    es = tf.keras.callbacks.EarlyStopping(monitor='loss', verbose=1, \
+    es = tf.keras.callbacks.EarlyStopping(monitor='val_loss', verbose=1, \
                                           patience=20, mode='min', \
                                           restore_best_weights=True)
     # mcp = tf.keras.callbacks.ModelCheckpoint(
