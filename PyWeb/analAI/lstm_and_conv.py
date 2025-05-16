@@ -5,7 +5,7 @@ import tensorflow as tf # tensorflow-cpu 2.10.0
 import numpy as np # numpy 1.26.4
 import matplotlib.pyplot as plt
 from tensorflow.keras import Sequential,Model,Input
-from tensorflow.keras.layers import Dense,LSTM,ConvLSTM1D,Dropout,Reshape
+from tensorflow.keras.layers import Dense,LSTM,ConvLSTM1D,Dropout,Reshape,MaxPool1D,BatchNormalization
 #from train_model import receive_data,preData,split_xyData,recovery_info
 
 np.random.seed(123)
@@ -32,12 +32,14 @@ def createModel_conv(pred_step):
     64,5, strides=1,padding='same',dropout=0.3,recurrent_dropout=0.2,
     return_sequences=False))
     conv_model.add(MaxPool1D(pool_size=2,strides=1,padding="same"))
+    conv_model.add(BatchNormalization())
     conv_model.add(Dropout(0.5))
     conv_model.add(Dense(256,activation="relu"))
     conv_model.add(Dropout(0.5))
     conv_model.add(Dense(64,activation="relu"))
     conv_model.add(Dropout(0.4))
     conv_model.add(Dense(32,activation="relu"))
+    conv_model.add(BatchNormalization())
     conv_model.add(Dropout(0.3))
     conv_model.add(Dense(1,activation="linear"))
     conv_model.add(Reshape((-1,)))
