@@ -69,7 +69,7 @@ def createScaler(coinname,pdata_sets=None):
       else : print("최초에는 데이터셋을 입력해야 합니다.")
     return scalers
 def preData(data_sets,coinname):
-    pdata_sets = np.array([[d['opening_price'],d['high_price'],d['low_price'],d['candle_acc_trade_volume'],d['trade_price']]\
+    pdata_sets = np.array([[d['opening_price'],d['high_price'],d['low_price'],d['candle_acc_trade_price'],d['trade_price']]\
             for d in data_sets])
     raw_sets = pdata_sets.copy()
     #min-max 스케일 X_scaled = X_std * (max - min) + min
@@ -154,13 +154,14 @@ class ConfingData():
             premodel = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.req_time}.+\.keras',f)]
             if len(premodel):
                 os.rename(paths+"/"+premodel[0],paths+"/"+premodel[0].split(".")[0]+".bak")
-            smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.req_time,date.today()))
-            if os.path.exists(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today())):
-                os.remove(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today()))
-            if os.path.exists(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today())):
-                os.remove(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today()))
-            os.rename(paths+"/tmp1.png", paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,date.today()))
-            os.rename(paths + "/tmp2.png",paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,date.today()))
+            dtstr = datetime.now().strftime("D%Y-%m-%dT%H=%M=%S")
+            smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.req_time,dtstr))
+            if os.path.exists(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,dtstr)):
+                os.remove(paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,dtstr))
+            if os.path.exists(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,dtstr)):
+                os.remove(paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,dtstr))
+            os.rename(paths+"/tmp1.png", paths+"/{}_{}_{}_{}_plot.png".format(self.coinname,self.timestepstr,self.req_time,dtstr))
+            os.rename(paths + "/tmp2.png",paths + "/{}_{}_{}_{}_scatt.png".format(self.coinname, self.timestepstr, self.req_time,dtstr))
         else :
             if os.path.exists(paths + "/tmp1.png"):
                 os.remove(paths + "/tmp1.png")
@@ -171,6 +172,8 @@ class ConfingData():
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요")
         if passwd != "5678":
             return
+        #smodel.save(paths+"/{}_{}_{}_{}.keras".format(self.coinname,self.timestepstr,self.req_time,date.today()))
+        #lastdate = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.req_time}.+\.keras', f)]
 class UserService():
     def pred_service(self,coinname="BTC",timestepstr="middle",req_time="days",train_type="lstm"):
         print("예측을 시작합니다.")
@@ -207,33 +210,35 @@ class UserService():
         print(x_user.shape)
         print(coinname, "데이터 전처리가 완료됨")
         if load_model:
-            tolerance = 0.005 # 0.5% 오차율 
+            tolerance = 0.01 # 2% 오차율
             y_pred = load_model.predict(x_data)
             y_pred = recovery_info(y_pred, coinname)
             y_data = y_raw
             print(y_pred.shape)
             print(y_data.shape)
-            accuracy = (np.abs(y_pred / y_data-1) < tolerance).mean()
-            print(f"현재 모델의 정확률 {accuracy:.2%}")
-            pred_avgrat = (np.abs(y_pred / y_data-1) < tolerance).mean(axis=0)
+            acc_calgap = np.abs(y_pred / y_data-1)
+            acc_calgap[acc_calgap<tolerance]=0
+            acc_mean = acc_calgap.mean(axis=0)
+            print(f"현재 모델의 ± 1% 유의수준 정확률 {acc_mean.mean():.2%}")
+            pred_avgrat = (y_pred / y_data - 1).mean(axis=0)
             user_pred = load_model.predict(np.array([x_user]))
             # print(y_pred.shape)
             rec_pred = recovery_info(user_pred, coinname)
-            #opening_price,high_price,low_price,candle_acc_trade_volume,trade_price
+            #opening_price,high_price,low_price,candle_acc_trade_price,trade_price
             print("====================================")           
-            print(f"opening_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0]:.2f}%")
+            print(f"opening_price pred:{rec_pred[0][0]:.4f}",f"recentry err rate:{pred_avgrat[0]:.2%}%")
             print(f"실제값 {y_data[-1][0]}, 예측값 {y_pred[-1][0]}") 
             print("====================================")           
-            print(f"high_price pred:{rec_pred[0][1]:.4f}",f"recentry err rate:{pred_avgrat[1]:.2f}%")
+            print(f"high_price pred:{rec_pred[0][1]:.4f}",f"recentry err rate:{pred_avgrat[1]:.2%}%")
             print(f"실제값 {y_data[-1][1]}, 예측값 {y_pred[-1][1]}")
             print("====================================")           
-            print(f"low_price pred:{rec_pred[0][2]:.4f}",f"recentry err rate:{pred_avgrat[2]:.2f}%")
+            print(f"low_price pred:{rec_pred[0][2]:.4f}",f"recentry err rate:{pred_avgrat[2]:.2%}%")
             print(f"실제값 {y_data[-1][2]}, 예측값 {y_pred[-1][2]}")
             print("====================================")           
-            print(f"candle_acc_trade_volume pred:{rec_pred[0][3]:.4f}",f"recentry err rate:{pred_avgrat[3]:.2f}%")
+            print(f"candle_acc_trade_price pred:{rec_pred[0][3]:.4f}",f"recentry err rate:{pred_avgrat[3]:.2%}%")
             print(f"실제값 {y_data[-1][3]}, 예측값 {y_pred[-1][3]}")
             print("====================================")           
-            print(f"trade_price pred:{rec_pred[0][4]:.4f}",f"recentry err rate:{pred_avgrat[4]:.2f}%")
+            print(f"trade_price pred:{rec_pred[0][4]:.4f}",f"recentry err rate:{pred_avgrat[4]:.2%}%")
             print(f"실제값 {y_data[-1][4]}, 예측값 {y_pred[-1][4]}")
             print("====================================")           
 
@@ -262,7 +267,7 @@ if "__main__"==__name__:
     # conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
     # conv_model = createModel_conv(TIME_STEP_STR)
     # cbs = createCallback(COIN_NAME)
-    # conv_admin.init_train(train_type=MODEL_TYPE, smodel=conv_model, cbs=cbs, epoch=10, batsize=None)
+    # conv_admin.init_train(train_type=MODEL_TYPE, smodel=conv_model, cbs=cbs, epoch=100, batsize=None)
 
     # print("전처리 main 실행")
     # # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
