@@ -1,4 +1,4 @@
-# py version 3.9
+# py version 3.9 , 가격검증 정확히
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import numpy as  np
@@ -87,7 +87,8 @@ def split_xyData(pre_datasets,raw_sets=None,step="middle"):
     x_data = []
     y_data = []
     y_raw = []
-    for t in range(len(pre_datasets)-time_step-1):
+
+    for t in range(len(pre_datasets)-time_step):
         x_data.append(pre_datasets[t:time_step+t])
         y_data.append(pre_datasets[time_step+t])#다중선형회귀
         if raw_sets is not None:
@@ -99,27 +100,7 @@ def recovery_info(pred_data,coinname):
         #X_scaled = X_std * (max - min) + min
         pred_data[:,dic] = pred_data[:,dic]*(scalers[dic]["max"]-scalers[dic]["min"])+scalers[dic]["min"]
     return pred_data
-def predict_service(target_name="BTC",req_time="days",pred_step="middle"):
-    pred_timestep=0
-    if pred_step=="short":pred_timestep=30
-    elif pred_step=="long":pred_timestep=90
-    elif pred_step=="llong":pred_timestep=180
-    else : pred_timestep=60
-    data_sets = []  # 최근데이터를 맨 뒤로 보냄
-    date_datas = []  # 수신된 날짜 데이터
-    minutetime = 0
-    if type(req_time) == int:
-        minutetime = req_time
-        req_time = "minutes/" + str(req_time)
-    # yyyy-MM-dd HH:mm:ss
-    print(target_name)
-    params = {"market": "KRW-" + target_name,  "count": str(pred_timestep)}
-    result = requests.get(MAIN_URL + req_time, params)
-    # print(result.url)
-    res = result.json()
-    res.reverse()
-    data_sets = [o for o in res if not o["candle_date_time_kst"] in date_datas]
-    return data_sets, target_name
+
 class ConfingData():
     def __init__(self,coinname="BTC",timestepstr="middle",req_time="days"):
         self.coinname=coinname
@@ -281,7 +262,7 @@ if "__main__"==__name__:
     # conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
     # conv_model = createModel_conv(TIME_STEP_STR)
     # cbs = createCallback(COIN_NAME)
-    # conv_admin.init_train(train_type=MODEL_TYPE, smodel=conv_model, cbs=cbs, epoch=300, batsize=None)
+    # conv_admin.init_train(train_type=MODEL_TYPE, smodel=conv_model, cbs=cbs, epoch=10, batsize=None)
 
     # print("전처리 main 실행")
     # # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
