@@ -107,7 +107,6 @@ def split_xyData(pre_datasets,raw_sets=None,step="middle"):
     x_data = []
     y_data = []
     y_raw = []
-    print("xx",len(pre_datasets))
     for t in range(len(pre_datasets)-time_step):
         x_data.append(pre_datasets[t:time_step+t])
         y_data.append(pre_datasets[time_step+t])#다중선형회귀
@@ -139,14 +138,14 @@ def train_model(self,smodel,x_data,y_data,cbs,paths,batsize=None,epoch=None,trai
     plt.legend()
     plt.title("MAE")
     plt.savefig(paths + "/tmp1.png")
-    plt.show()
+    #plt.show()
     y_pred = smodel.predict(x_data if upgrade_sw is None else upgrade_sw["all_x_data"])
     plt.scatter(y_data if upgrade_sw is None else upgrade_sw["all_y_data"], y_pred, s=1)
     plt.plot(y_data if upgrade_sw is None else upgrade_sw["all_y_data"], y_data if upgrade_sw is None else upgrade_sw["all_y_data"])
     plt.xlabel("True")
     plt.ylabel("Pred")
     plt.savefig(paths + "/tmp2.png")
-    plt.show()
+    #plt.show()
     if upgrade_sw is not None:
         print("****************** 기존모델과 현재 훈련된 모델 비교 테스트 *******************")
         print(f"기존모델 *MSE {upgrade_sw['old_MSE']:.6f}  *MAE {upgrade_sw['old_MAE']:.6f} ")
@@ -218,7 +217,7 @@ class ConfingData():
         if passwd != "1234":
             return
         #getnct = input("최초 훈련으로 얻어올 데이터의 수량을 입력하세요\n")
-        getnct=50000
+        getnct=400
         print(self.coinname, self.timestepstr, self.name_req_time, "=========최초 훈련을 시작합니다.")
         data_sets, target_name, _ = receive_data(target_name=self.coinname, req_time=self.req_time,
                                                  getcnt=int(getnct) if getnct else None)
@@ -451,14 +450,15 @@ if "__main__"==__name__:
     #time_steps = ["short","middle","long","llong"]
     time_steps = ["middle", "long"]
     # req_times = [10, 30, 60, 240,"days","weeks","months"]
-    req_times = [60, 240, "days", "months"]
+    req_times = [60, "days", "months"]
     MODEL_TYPEs = ["conv", "lstm"]
-    for cname in names:
+    for cname in ["BTC","ETH"]:
         for req in req_times:
-            if req == "months" and time_steps == "llong": continue
-            t_admin = ConfingData(coinname=cname, timestepstr=time_steps, req_time=req)
-            t_models = [createModel_conv(time_steps), createModel_conv(time_steps)]
-            tcbs = createCallback(cname)
-            t_admin.init_train(train_types=MODEL_TYPEs, smodels=t_models, cbs=tcbs, epoch=5, batsize=None)
+            for time_step in time_steps:
+                if req == "months" and time_step == "llong": continue
+                t_admin = ConfingData(coinname=cname, timestepstr=time_step, req_time=req)
+                t_models = [createModel_conv(time_step), createModel_lstm(time_step)]
+                tcbs = createCallback(cname)
+                t_admin.init_train(train_types=MODEL_TYPEs, smodels=t_models, cbs=tcbs, epoch=2, batsize=None)
 
 
