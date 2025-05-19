@@ -7,6 +7,7 @@ import pickle
 import matplotlib.pyplot as plt
 import os
 import re
+import time
 from datetime import date
 import tensorflow as tf
 from lstm_and_conv import createModel_conv,createModel_lstm,createCallback
@@ -36,15 +37,12 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200,last_date_time=Non
     date_datas = []# 수신된 날짜 데이터
     all_data_sets=None
     minutetime =0
-
     if type(req_time)==int:
         minutetime=req_time
         req_time="minutes/"+str(req_time)
     dt = datetime.now().replace(microsecond=0)
     while(True):
         #yyyy-MM-dd HH:mm:ss
-        print("========")
-        print(req_time)
         params = {"market":"KRW-"+target_name,"to":dt,"count":getcnt}
         result = requests.get(MAIN_URL+req_time,params)
         res = result.json()
@@ -57,7 +55,6 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200,last_date_time=Non
         if minutetime:
             dt = dt - timedelta(minutes=minutetime-1)
         date_datas.extend([ o["candle_date_time_kst"] for o in res ])
-        print(last_date_time)
         if last_date_time is not None:
             fdate_time = datetime.strptime(data_sets[0]["candle_date_time_kst"],"%Y-%m-%dT%H:%M:%S")
             print("xxxxxxxxxxxxx")
@@ -70,6 +67,7 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200,last_date_time=Non
                 print(date_datas[fix])
                 break
         else:
+            time.sleep(0.05)
             if len(data_sets)>=getcnt:break
     return data_sets,target_name,all_data_sets
     # requests.get()
@@ -167,7 +165,8 @@ def train_model(self,smodel,x_data,y_data,cbs,paths,batsize=None,epoch=None,trai
         new_MSE, new_MAE = smodel.evaluate(x_data, y_data)  # 기존모델 손실도
         print(f"현재 모델 *MSE {new_MSE:.6f} *MAE {new_MAE:.6f} ")
 
-    yn = input("현재 모델을 저장하시겠습니까(y/n)? 저장시 기존모델은 백업(bak)으로 기록됩니다.\n")
+    #yn = input("현재 모델을 저장하시겠습니까(y/n)? 저장시 기존모델은 백업(bak)으로 기록됩니다.\n")
+    yn = "y"
     if yn == "y":
         prebak = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.req_time}.+\.bak', f)]
         if len(prebak):
@@ -213,11 +212,13 @@ class ConfingData():
             self.name_req_time = "mins" + str(req_time)
         self.req_time=req_time
     def init_train(self,train_type="lstm",smodel=None,cbs=None,epoch=None,batsize=None):
-        passwd = input("최초 훈련을 시작합니다.........................................."
-                       " \n스케일러등 모든 모델은 초기화 됩니다. 저장시 기존 모델은 백업으로 존재합니다. 비밀번호를 입력해주세요 1234\n")
+        # passwd = input("최초 훈련을 시작합니다.........................................."
+        #                " \n스케일러등 모든 모델은 초기화 됩니다. 저장시 기존 모델은 백업으로 존재합니다. 비밀번호를 입력해주세요 1234\n")
+        passwd="1234"
         if passwd != "1234":
             return
-        getnct = input("최초 훈련으로 얻어올 데이터의 수량을 입력하세요\n")
+        #getnct = input("최초 훈련으로 얻어올 데이터의 수량을 입력하세요\n")
+        getnct=50000
         paths = "./%s/%s" % (train_type + "save", self.coinname)
         if not os.path.exists(paths):
             os.makedirs(paths)  # 여러개의 디렉토리 생성
@@ -243,7 +244,6 @@ class ConfingData():
             dt_var = model_list[0].split(".")[0].split("_")[3]
             step_var = model_list[0].split(".")[0].split("_")[1]
             last_time = datetime.strptime(dt_var,"D%Y-%m-%dT%H-%M-%S")
-
             step_value = 0
             if step_var=="short":
                 step_value=SHORT
@@ -380,16 +380,16 @@ class UserService():
             ret_text+=f"실제값 {y_data[-1][4]}, 예측값 {y_pred[-1][4]}\n"
         return ret_text;
 if "__main__"==__name__:
-    # learnner
-    # createModel_conv,createModel_lstm,createCallback
-    # 1. ==========환경설정
-    COIN_NAME = "BTC"
-    # short middle long llong
-    TIME_STEP_STR = "middle"  # 변경
-    # months, weeks, days ,  분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
-    #REQ_TIME = "days"  # 변경
-    REQ_TIME = 3  # 변경
-    REQ_TIME = "weeks"  # 변경
+    # # learnner
+    # # createModel_conv,createModel_lstm,createCallback
+    # # 1. ==========환경설정
+    # COIN_NAME = "BTC"
+    # # short middle long llong
+    # TIME_STEP_STR = "middle"  # 변경
+    # # months, weeks, days ,  분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
+    # #REQ_TIME = "days"  # 변경
+    # # REQ_TIME = 3  # 변경
+    # REQ_TIME = "weeks"  # 변경
 
     # #2. ========== lstm 모델 최초 훈련()
     # MODEL_TYPE="lstm"
@@ -398,29 +398,29 @@ if "__main__"==__name__:
     # cbs = createCallback(COIN_NAME)
     # lstm_admin.init_train(train_type=MODEL_TYPE,smodel=lstm_model,cbs=cbs,epoch=3,batsize=None)
 
-    # #3. ========== conv 모델 최초 훈련()
+    #3. ========== conv 모델 최초 훈련()
     # MODEL_TYPE="conv"
     # conv_admin = ConfingData(coinname=COIN_NAME,timestepstr=TIME_STEP_STR,req_time=REQ_TIME)
     # conv_model = createModel_conv(TIME_STEP_STR)
     # cbs = createCallback(COIN_NAME)
     # conv_admin.init_train(train_type=MODEL_TYPE,smodel=conv_model,cbs=cbs,epoch=2,batsize=None)
 
-    #4. =========== conv 모델 업그레이드
-    #conv 모델 upgrade
-    MODEL_TYPE = "conv"
-    conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
-    #   upgrade
-    conv_admin.upgrade_train(train_type=MODEL_TYPE, epoch=2, batsize=None)
+    # #4. =========== conv 모델 업그레이드
+    # #conv 모델 upgrade
+    # MODEL_TYPE = "conv"
+    # conv_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
+    # #   upgrade
+    # conv_admin.upgrade_train(train_type=MODEL_TYPE, epoch=2, batsize=None)
 
     # # 5. =========== lstm 모델 업그레이드
-    # # conv 모델 upgrade
+    # # lstm 모델 upgrade
     # MODEL_TYPE = "lstm"
     # lstm_admin = ConfingData(coinname=COIN_NAME, timestepstr=TIME_STEP_STR, req_time=REQ_TIME)
     # #   upgrade
     # lstm_admin.upgrade_train(train_type=MODEL_TYPE, epoch=5, batsize=None)
 
     # print("전처리 main 실행")
-    # # months, weeks,days, minutes 분 단위 : 1, 3, 5, 10, 15, 30, 60, 240
+    # # months, weeks,days, minutes 분 단위 : 10, 30, 60, 240
     # #receive_data()
     # data_sets,target_name,req_time = receive_data(req_time=1,getcnt=1000)
     # #data_sets,target_name,req_time = receive_data(req_time="months",getcnt=500)
@@ -442,4 +442,18 @@ if "__main__"==__name__:
     #user = UserService()
     #res_text = user.pred_service(coinname="BTC",train_type="conv",timestepstr="middle",req_time="days")
     #print(res_text)
+    #{'BTC': ['Bitcoin', '비트코인'], 'ETH': ['Ethereum', '이더리움'], 'ETC': ['Ethereum Classic', '이더리움 클래식'], 'XRP': ['XR
+    #최초 모델 훈련 자동황
+    print(names.keys())
+    time_steps = ["short","middle","long","llong"]
+    req_times = [10, 30, 60, 240,"days","weeks","months"]
+    MODEL_TYPE = "conv"
+    for cname in names:
+        for req in req_times:
+            if req=="months" and time_steps=="llong":continue
+            t_admin = ConfingData(coinname=cname, timestepstr=time_steps, req_time=req)
+            t_model = createModel_conv(time_steps)
+            tcbs = createCallback(cname)
+            t_admin.init_train(train_type=MODEL_TYPE, smodel=t_model, cbs=tcbs, epoch=1, batsize=None)
+
 
