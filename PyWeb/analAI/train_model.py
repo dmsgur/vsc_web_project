@@ -445,8 +445,10 @@ if "__main__"==__name__:
     #{'BTC': ['Bitcoin', '비트코인'], 'ETH': ['Ethereum', '이더리움'], 'ETC': ['Ethereum Classic', '이더리움 클래식'], 'XRP': ['XR
     #최초 모델 훈련 자동황
     print(names.keys())
-    time_steps = ["short","middle","long","llong"]
-    req_times = [10, 30, 60, 240,"days","weeks","months"]
+    #time_steps = ["short","middle","long","llong"]
+    time_steps = [ "middle", "long"]
+    #req_times = [10, 30, 60, 240,"days","weeks","months"]
+    req_times = [60, 240, "days",  "months"]
     MODEL_TYPE = "conv"
     for cname in names:
         for req in req_times:
@@ -454,6 +456,6 @@ if "__main__"==__name__:
             t_admin = ConfingData(coinname=cname, timestepstr=time_steps, req_time=req)
             t_model = createModel_conv(time_steps)
             tcbs = createCallback(cname)
-            t_admin.init_train(train_type=MODEL_TYPE, smodel=t_model, cbs=tcbs, epoch=1, batsize=None)
+            t_admin.init_train(train_type=MODEL_TYPE, smodel=t_model, cbs=tcbs, epoch=50, batsize=None)
 
 
