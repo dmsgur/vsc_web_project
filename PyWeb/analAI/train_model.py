@@ -1,4 +1,4 @@
-# py version 3.9 , 가격검증 정확히
+# #train_model.py
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import numpy as  np
@@ -211,7 +211,7 @@ class ConfingData():
         if type(req_time) == int:
             self.name_req_time = "mins" + str(req_time)
         self.req_time=req_time
-    def init_train(self,train_type="lstm",smodel=None,cbs=None,epoch=None,batsize=None):
+    def init_train(self,train_types=None,smodels=None,cbs=None,epoch=None,batsize=None):
         # passwd = input("최초 훈련을 시작합니다.........................................."
         #                " \n스케일러등 모든 모델은 초기화 됩니다. 저장시 기존 모델은 백업으로 존재합니다. 비밀번호를 입력해주세요 1234\n")
         passwd="1234"
@@ -219,82 +219,86 @@ class ConfingData():
             return
         #getnct = input("최초 훈련으로 얻어올 데이터의 수량을 입력하세요\n")
         getnct=50000
-        paths = "./%s/%s" % (train_type + "save", self.coinname)
-        if not os.path.exists(paths):
-            os.makedirs(paths)  # 여러개의 디렉토리 생성
-        data_sets,target_name,_=receive_data(target_name=self.coinname,req_time= self.req_time, getcnt=int(getnct) if getnct else None)
-        print(target_name,":수신데이터수량:",len(data_sets))
-        preprocessed_sets,_ = preData(data_sets, self.coinname)
-        print(target_name,"데이터 전처리가 완료됨")
-        x_data,y_data,y_raw = split_xyData(preprocessed_sets, step=self.timestepstr)
-        user = UserService()
-        train_model(self, smodel, x_data, y_data, cbs, paths, batsize, epoch,train_type,user=user)
+        data_sets, target_name, _ = receive_data(target_name=self.coinname, req_time=self.req_time,
+                                                 getcnt=int(getnct) if getnct else None)
+        print(target_name, ":수신데이터수량:", len(data_sets))
+        preprocessed_sets, _ = preData(data_sets, self.coinname)
+        print(target_name, "데이터 전처리가 완료됨")
+        x_data, y_data, y_raw = split_xyData(preprocessed_sets, step=self.timestepstr)
+        for train_type in train_types:
+            paths = "./%s/%s" % (train_type + "save", self.coinname)
+            if not os.path.exists(paths):
+                os.makedirs(paths)  # 여러개의 디렉토리 생성
+            user = UserService()
+            for smodel in smodels:
+                train_model(self, smodel, x_data, y_data, cbs, paths, batsize, epoch,train_type,user=user)
 
-    def upgrade_train(self,train_type="lstm",cbs=None,epoch=None,batsize=None):
+    def upgrade_train(self,train_types=None,cbs=None,epoch=None,batsize=None):
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요5678\n")
         if passwd != "5678":
             return
-        paths = "./%s/%s" % (train_type + "save", self.coinname)
-        model_list = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.name_req_time if self.name_req_time is not None else self.req_time}.+\.keras', f)]
-        # print(model_list)
-        load_model = None
-        nd=datetime.now().replace(microsecond=0)
-        if len(model_list):  # pass
-            load_model = tf.keras.models.load_model(paths + "/" + model_list[0])
-            dt_var = model_list[0].split(".")[0].split("_")[3]
-            step_var = model_list[0].split(".")[0].split("_")[1]
-            last_time = datetime.strptime(dt_var,"D%Y-%m-%dT%H-%M-%S")
-            step_value = 0
-            if step_var=="short":
-                step_value=SHORT
-            elif step_var=="long":
-                step_value = LONG
-            elif step_var=="llong":
-                step_value = LONG
-            else : step_value=MIDDLE
-            if self.name_req_time is not None:
-                gap=60
-                if (nd-last_time).total_seconds()//gap<self.req_time+1:
-                    print(f"최종 업그레드 분수가 부족합니다.  {(nd-last_time).total_seconds()//gap+self.req_time}분 후에 다시 업그레이드를 시도하세요")
-                last_time=last_time - timedelta(minutes=((step_value+1)*self.req_time))
-            elif self.req_time == "weeks":
-                gap = 60*60*24*7
-                if (nd-last_time).total_seconds()//gap<1:
-                    gd = 7-((nd-last_time).total_seconds()//(60*60*24))
-                    print(f"최종 업그레드 주의 일수가 부족합니다. {gd+1} 일 후에 다시 업그레이드를 시도하세요")
-                last_time=last_time - timedelta(weeks=step_value+1)
-                print("주")
-            elif self.req_time == "months":
-                gap = 60 * 60 * 24 * 31
-                if (nd-last_time).total_seconds()//gap<1:
-                    gd = 31 - ((nd - last_time).total_seconds() // (60 * 60 * 24))
-                    print(f"최종 업그레드 월의 일수가 부족합니다. {gd+1} 일 후에 다시 업그레이드를 시도하세요")
-                last_time=last_time - relativedelta(months=step_value+1)
-                print("월")
-            else :
-                gap = 60 * 60 * 24
-                if (nd-last_time).total_seconds()//gap<1:
-                    gd = (24-(nd - last_time).total_seconds() // (60 * 60))
-                    print(f"최종 업그레드일과 동일 날짜 입니다. {gd+1} 시간 후에 다시 업그레이드를 시도하세요")
-                last_time=last_time-timedelta(days=step_value+1)
-                print("마지막 일")
-                print(last_time)
-                #"days"
-            data_sets,target_name,all_data_sets=receive_data(target_name="BTC", req_time=self.req_time, last_date_time=last_time)
-            print("분단위 수신============")
-            print(len(data_sets))
-            print("최종 현재가:",data_sets[-1]["trade_price"])
-            print((target_name))
-            preprocessed_sets, y_raw = preData(data_sets, self.coinname)
-            all_preprocessed_sets, all_y_raw = preData(all_data_sets, self.coinname)
-            print(self.coinname, "데이터 전처리가 완료됨")
-            x_data, y_data, y_raw = split_xyData(preprocessed_sets,y_raw, step=self.timestepstr)
-            all_x_data, all_y_data, all_y_raw = split_xyData(all_preprocessed_sets, all_y_raw, step=self.timestepstr)
-            old_MSE,old_MAE = load_model.evaluate(all_x_data,all_y_data)#기존모델 손실도
-            user = UserService()
-            old_text = user.pred_service(coinname=self.coinname, train_type=train_type, timestepstr=self.timestepstr,
-                              req_time=self.req_time, param_model=load_model,test_train=True)#기존모델 손실계산
-            train_model(self, load_model, x_data, y_data, cbs, paths, batsize, epoch,train_type,user,{"old_MSE":old_MSE,"old_MAE":old_MAE,"all_x_data":all_x_data,"all_y_data":all_y_data,"all_y_raw":all_y_raw,"old_text":old_text})#True 업그레이드 여부
+        for train_type in train_types:
+            paths = "./%s/%s" % (train_type + "save", self.coinname)
+            model_list = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.name_req_time if self.name_req_time is not None else self.req_time}.+\.keras', f)]
+            # print(model_list)
+            load_model = None
+            nd=datetime.now().replace(microsecond=0)
+            if len(model_list):  # pass
+                load_model = tf.keras.models.load_model(paths + "/" + model_list[0])
+                dt_var = model_list[0].split(".")[0].split("_")[3]
+                step_var = model_list[0].split(".")[0].split("_")[1]
+                last_time = datetime.strptime(dt_var,"D%Y-%m-%dT%H-%M-%S")
+                step_value = 0
+                if step_var=="short":
+                    step_value=SHORT
+                elif step_var=="long":
+                    step_value = LONG
+                elif step_var=="llong":
+                    step_value = LONG
+                else : step_value=MIDDLE
+                if self.name_req_time is not None:
+                    gap=60
+                    if (nd-last_time).total_seconds()//gap<self.req_time+1:
+                        print(f"최종 업그레드 분수가 부족합니다.  {(nd-last_time).total_seconds()//gap+self.req_time}분 후에 다시 업그레이드를 시도하세요")
+                    last_time=last_time - timedelta(minutes=((step_value+1)*self.req_time))
+                elif self.req_time == "weeks":
+                    gap = 60*60*24*7
+                    if (nd-last_time).total_seconds()//gap<1:
+                        gd = 7-((nd-last_time).total_seconds()//(60*60*24))
+                        print(f"최종 업그레드 주의 일수가 부족합니다. {gd+1} 일 후에 다시 업그레이드를 시도하세요")
+                    last_time=last_time - timedelta(weeks=step_value+1)
+                    print("주")
+                elif self.req_time == "months":
+                    gap = 60 * 60 * 24 * 31
+                    if (nd-last_time).total_seconds()//gap<1:
+                        gd = 31 - ((nd - last_time).total_seconds() // (60 * 60 * 24))
+                        print(f"최종 업그레드 월의 일수가 부족합니다. {gd+1} 일 후에 다시 업그레이드를 시도하세요")
+                    last_time=last_time - relativedelta(months=step_value+1)
+                    print("월")
+                else :
+                    gap = 60 * 60 * 24
+                    if (nd-last_time).total_seconds()//gap<1:
+                        gd = (24-(nd - last_time).total_seconds() // (60 * 60))
+                        print(f"최종 업그레드일과 동일 날짜 입니다. {gd+1} 시간 후에 다시 업그레이드를 시도하세요")
+                    last_time=last_time-timedelta(days=step_value+1)
+                    print("마지막 일")
+                    print(last_time)
+                    #"days"
+                data_sets,target_name,all_data_sets=receive_data(target_name="BTC", req_time=self.req_time, last_date_time=last_time)
+                print("분단위 수신============")
+                print(len(data_sets))
+                print("최종 현재가:",data_sets[-1]["trade_price"])
+                print((target_name))
+                preprocessed_sets, y_raw = preData(data_sets, self.coinname)
+                all_preprocessed_sets, all_y_raw = preData(all_data_sets, self.coinname)
+                print(self.coinname, "데이터 전처리가 완료됨")
+                x_data, y_data, y_raw = split_xyData(preprocessed_sets,y_raw, step=self.timestepstr)
+                all_x_data, all_y_data, all_y_raw = split_xyData(all_preprocessed_sets, all_y_raw, step=self.timestepstr)
+                old_MSE,old_MAE = load_model.evaluate(all_x_data,all_y_data)#기존모델 손실도
+                user = UserService()
+                old_text = user.pred_service(coinname=self.coinname, train_type=train_type, timestepstr=self.timestepstr,
+                                  req_time=self.req_time, param_model=load_model,test_train=True)#기존모델 손실계산
+                train_model(self, load_model, x_data, y_data, cbs, paths, batsize, epoch,train_type,user,{"old_MSE":old_MSE,"old_MAE":old_MAE,"all_x_data":all_x_data,"all_y_data":all_y_data,"all_y_raw":all_y_raw,"old_text":old_text})#True 업그레이드 여부
         else:
             print("해당 모델이 아직 존재하지 않습니다.")
             return
@@ -444,18 +448,18 @@ if "__main__"==__name__:
     #print(res_text)
     #{'BTC': ['Bitcoin', '비트코인'], 'ETH': ['Ethereum', '이더리움'], 'ETC': ['Ethereum Classic', '이더리움 클래식'], 'XRP': ['XR
     #최초 모델 훈련 자동황
-    print(names.keys())
+    # print(names.keys())
     #time_steps = ["short","middle","long","llong"]
     time_steps = [ "middle", "long"]
     #req_times = [10, 30, 60, 240,"days","weeks","months"]
     req_times = [60, 240, "days",  "months"]
-    MODEL_TYPE = "conv"
+    MODEL_TYPEs = ["conv","lstm"]
     for cname in names:
         for req in req_times:
             if req=="months" and time_steps=="llong":continue
             t_admin = ConfingData(coinname=cname, timestepstr=time_steps, req_time=req)
-            t_model = createModel_conv(time_steps)
+            t_models = [createModel_conv(time_steps),createModel_conv(time_steps)]
             tcbs = createCallback(cname)
-            t_admin.init_train(train_type=MODEL_TYPE, smodel=t_model, cbs=tcbs, epoch=100, batsize=None)
+            t_admin.init_train(train_types=MODEL_TYPEs, smodels=t_models, cbs=tcbs, epoch=100, batsize=None)
 
 
