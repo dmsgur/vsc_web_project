@@ -456,6 +456,6 @@ if "__main__"==__name__:
             t_admin = ConfingData(coinname=cname, timestepstr=time_steps, req_time=req)
             t_model = createModel_conv(time_steps)
             tcbs = createCallback(cname)
-            t_admin.init_train(train_type=MODEL_TYPE, smodel=t_model, cbs=tcbs, epoch=50, batsize=None)
+            t_admin.init_train(train_type=MODEL_TYPE, smodel=t_model, cbs=tcbs, epoch=100, batsize=None)
 
 
