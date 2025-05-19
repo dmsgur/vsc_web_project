@@ -219,6 +219,7 @@ class ConfingData():
             return
         #getnct = input("최초 훈련으로 얻어올 데이터의 수량을 입력하세요\n")
         getnct=50000
+        print(self.coinname, self.timestepstr, self.name_req_time, "=========최초 훈련을 시작합니다.")
         data_sets, target_name, _ = receive_data(target_name=self.coinname, req_time=self.req_time,
                                                  getcnt=int(getnct) if getnct else None)
         print(target_name, ":수신데이터수량:", len(data_sets))
@@ -226,6 +227,7 @@ class ConfingData():
         print(target_name, "데이터 전처리가 완료됨")
         x_data, y_data, y_raw = split_xyData(preprocessed_sets, step=self.timestepstr)
         for train_type in train_types:
+            print(self.coinname,train_type, "모델========= 훈련 진행중.............")
             paths = "./%s/%s" % (train_type + "save", self.coinname)
             if not os.path.exists(paths):
                 os.makedirs(paths)  # 여러개의 디렉토리 생성
@@ -237,11 +239,13 @@ class ConfingData():
         passwd = input("모델의 추가 훈련데이터를 수신하여 기존모델을 업그레이드 합니다. 비밀번호를 입력해주세요5678\n")
         if passwd != "5678":
             return
+        print(self.coinname, self.timestepstr, self.name_req_time, "=========업그레이드 훈련을 시작합니다.")
         for train_type in train_types:
             paths = "./%s/%s" % (train_type + "save", self.coinname)
             model_list = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.name_req_time if self.name_req_time is not None else self.req_time}.+\.keras', f)]
             # print(model_list)
             load_model = None
+            print(self.coinname, train_type, "모델========= 업그레이드 훈련 진행중.............")
             nd=datetime.now().replace(microsecond=0)
             if len(model_list):  # pass
                 load_model = tf.keras.models.load_model(paths + "/" + model_list[0])
@@ -285,13 +289,8 @@ class ConfingData():
                     print(last_time)
                     #"days"
                 data_sets,target_name,all_data_sets=receive_data(target_name="BTC", req_time=self.req_time, last_date_time=last_time)
-                print("분단위 수신============")
-                print(len(data_sets))
-                print("최종 현재가:",data_sets[-1]["trade_price"])
-                print((target_name))
                 preprocessed_sets, y_raw = preData(data_sets, self.coinname)
                 all_preprocessed_sets, all_y_raw = preData(all_data_sets, self.coinname)
-                print(self.coinname, "데이터 전처리가 완료됨")
                 x_data, y_data, y_raw = split_xyData(preprocessed_sets,y_raw, step=self.timestepstr)
                 all_x_data, all_y_data, all_y_raw = split_xyData(all_preprocessed_sets, all_y_raw, step=self.timestepstr)
                 old_MSE,old_MAE = load_model.evaluate(all_x_data,all_y_data)#기존모델 손실도
@@ -450,16 +449,16 @@ if "__main__"==__name__:
     #최초 모델 훈련 자동황
     # print(names.keys())
     #time_steps = ["short","middle","long","llong"]
-    time_steps = [ "middle", "long"]
-    #req_times = [10, 30, 60, 240,"days","weeks","months"]
-    req_times = [60, 240, "days",  "months"]
-    MODEL_TYPEs = ["conv","lstm"]
+    time_steps = ["middle", "long"]
+    # req_times = [10, 30, 60, 240,"days","weeks","months"]
+    req_times = [60, 240, "days", "months"]
+    MODEL_TYPEs = ["conv", "lstm"]
     for cname in names:
         for req in req_times:
-            if req=="months" and time_steps=="llong":continue
+            if req == "months" and time_steps == "llong": continue
             t_admin = ConfingData(coinname=cname, timestepstr=time_steps, req_time=req)
-            t_models = [createModel_conv(time_steps),createModel_conv(time_steps)]
+            t_models = [createModel_conv(time_steps), createModel_conv(time_steps)]
             tcbs = createCallback(cname)
-            t_admin.init_train(train_types=MODEL_TYPEs, smodels=t_models, cbs=tcbs, epoch=100, batsize=None)
+            t_admin.init_train(train_types=MODEL_TYPEs, smodels=t_models, cbs=tcbs, epoch=5, batsize=None)
 
 
