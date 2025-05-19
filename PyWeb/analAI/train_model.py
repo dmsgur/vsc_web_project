@@ -243,8 +243,7 @@ class ConfingData():
             dt_var = model_list[0].split(".")[0].split("_")[3]
             step_var = model_list[0].split(".")[0].split("_")[1]
             last_time = datetime.strptime(dt_var,"D%Y-%m-%dT%H-%M-%S")
-            print(last_time)
-            print(step_var)
+
             step_value = 0
             if step_var=="short":
                 step_value=SHORT
@@ -254,18 +253,29 @@ class ConfingData():
                 step_value = LONG
             else : step_value=MIDDLE
             if self.name_req_time is not None:
+                gap=60
+                if (nd-last_time).total_seconds()//gap<self.req_time+1:
+                    print(f"최종 업그레드 분수가 부족합니다.  {(nd-last_time).total_seconds()//gap+self.req_time}분 후에 다시 업그레이드를 시도하세요")
                 last_time=last_time - timedelta(minutes=((step_value+1)*self.req_time))
             elif self.req_time == "weeks":
+                gap = 60*60*24*7
+                if (nd-last_time).total_seconds()//gap<1:
+                    gd = 7-((nd-last_time).total_seconds()//(60*60*24))
+                    print(f"최종 업그레드 주의 일수가 부족합니다. {gd+1} 일 후에 다시 업그레이드를 시도하세요")
                 last_time=last_time - timedelta(weeks=step_value+1)
                 print("주")
             elif self.req_time == "months":
-                if nd.strftime("%Y-%m-%d") == last_time.strftime("%Y-%m-%d"):
-                    print("최종 업그레드일과 동일 월 입니다. 다음달에 다시 업그레이드를 시도하세요")
+                gap = 60 * 60 * 24 * 31
+                if (nd-last_time).total_seconds()//gap<1:
+                    gd = 31 - ((nd - last_time).total_seconds() // (60 * 60 * 24))
+                    print(f"최종 업그레드 월의 일수가 부족합니다. {gd+1} 일 후에 다시 업그레이드를 시도하세요")
                 last_time=last_time - relativedelta(months=step_value+1)
                 print("월")
             else :
-                if nd.strftime("%Y-%m-%d") == last_time.strftime("%Y-%m-%d"):
-                    print("최종 업그레드일과 동일 날짜 입니다. 내일 다시 업그레이드를 시도하세요")
+                gap = 60 * 60 * 24
+                if (nd-last_time).total_seconds()//gap<1:
+                    gd = (24-(nd - last_time).total_seconds() // (60 * 60))
+                    print(f"최종 업그레드일과 동일 날짜 입니다. {gd+1} 시간 후에 다시 업그레이드를 시도하세요")
                 last_time=last_time-timedelta(days=step_value+1)
                 print("마지막 일")
                 print(last_time)
