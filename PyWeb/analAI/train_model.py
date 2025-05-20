@@ -71,14 +71,14 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200,last_date_time=Non
     #pass #주소로부터 데이터 수신
 def createScaler(coinname,pdata_sets=None):
     scalers = []
-    paths = f"./configs/{coinname}_scaler"
+    paths = f"./analAI/configs/{coinname}_scaler"
     if os.path.exists(paths):
         with open(paths, "rb") as fp:
             scalers = pickle.load(fp)
     else:
       if pdata_sets is not None:
-          if not os.path.exists("./configs"):
-            os.mkdir("./configs")
+          if not os.path.exists("./analAI/configs"):
+            os.mkdir("/analAI/configs")
           for i in range(pdata_sets.shape[1]):
               scalers.append({"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()})
           with open(paths,"wb") as fp:
@@ -227,7 +227,7 @@ class ConfingData():
         x_data, y_data, y_raw = split_xyData(preprocessed_sets, step=self.timestepstr)
         for train_type in smodels:
             print(self.coinname,train_type, "모델========= 훈련 진행중.............")
-            paths = "./%s/%s" % (train_type + "save", self.coinname)
+            paths = "./analAI/%s/%s" % (train_type + "save", self.coinname)
             if not os.path.exists(paths):
                 os.makedirs(paths)  # 여러개의 디렉토리 생성
             user = UserService()
@@ -240,7 +240,7 @@ class ConfingData():
             return
         print(self.coinname, self.timestepstr, self.name_req_time, "=========업그레이드 훈련을 시작합니다.")
         for train_type in train_types:
-            paths = "./%s/%s" % (train_type + "save", self.coinname)
+            paths = "./analAI/%s/%s" % (train_type + "save", self.coinname)
             model_list = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.name_req_time if self.name_req_time is not None else self.req_time}.+\.keras', f)]
             # print(model_list)
             load_model = None
@@ -307,7 +307,7 @@ class UserService():
             if type(req_time) == int:
                 name_req_time = "mins" + str(req_time)
             print("예측을 시작합니다.")
-            paths = "./%s/%s" % (train_type + "save", coinname)
+            paths = "./analAI/%s/%s" % (train_type + "save", coinname)
             model_list = [f for f in os.listdir(paths) if re.match(f'.+{timestepstr}_{name_req_time if name_req_time is not None else req_time}.+\.keras', f)]
             # print(model_list)
             if len(model_list):#pass

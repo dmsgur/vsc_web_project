@@ -1,12 +1,12 @@
 #lstm_and_conv.py
-import os
 import sys
-from datetime import date
-import tensorflow as tf # tensorflow-cpu 2.10.0
-import numpy as np # numpy 1.26.4
+
 import matplotlib.pyplot as plt
-from tensorflow.keras import Sequential,Model,Input
-from tensorflow.keras.layers import Dense,LSTM,ConvLSTM1D,Dropout,Reshape,MaxPool1D,BatchNormalization
+import numpy as np  # numpy 1.26.4
+import tensorflow as tf  # tensorflow-cpu 2.10.0
+from tensorflow.keras import Sequential, Input
+from tensorflow.keras.layers import Dense, LSTM, ConvLSTM1D, Dropout, Reshape, MaxPool1D, BatchNormalization
+
 #from train_model import receive_data,preData,split_xyData,recovery_info
 
 np.random.seed(123)
