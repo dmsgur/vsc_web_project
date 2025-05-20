@@ -475,7 +475,7 @@ if "__main__"==__name__:
     time_steps = ["middle","long"]
     # req_times = [10, 30, 60, 240,"days","weeks","months"]
     req_times = [60,"days"]
-    progressval = len(time_steps)*len(req_times)*len(names_arr)
+    progressval = len(time_steps)*len(req_times)*len(names_arr)*len(["lstm","conv"])
     progresscnt=0
     for cname in ["BTC","ETH","XRP"]:
         for time_step in time_steps:
