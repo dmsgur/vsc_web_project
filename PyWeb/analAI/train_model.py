@@ -208,6 +208,7 @@ class ConfingData():
         self.name_req_time=None
         if type(req_time) == int:
             self.name_req_time = "mins" + str(req_time)
+        else : self.name_req_time=req_time
         self.req_time=req_time
     def init_train(self,smodels=None,cbs=None,epoch=None,batsize=None):
         # passwd = input("최초 훈련을 시작합니다.........................................."
