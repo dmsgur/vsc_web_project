@@ -1,7 +1,11 @@
 from selectors import SelectSelector
 from analAI.train_model import web_service
-from flask import Flask,render_template,url_for,request,jsonify
+from flask import Flask,render_template,url_for,request,jsonify,send_from_directory
+import os
+import re
+
 app = Flask(__name__)
+GRAPH_ROOT="./analAI"
 titles="선형회귀모델"
 #static 디렉토리 운영
 # html 경로 {{ url_for('static', filename='css/style.css') }}
@@ -14,11 +18,20 @@ titles="선형회귀모델"
 @app.route("/")
 def index():
     print("인덱스")
-    analizeAi("lstm")
     return "hellow python flask webpage"
-@app.route("/hello")
-def hello():
-    return "hello path route"
+@app.route("/graph/<path:filename>")
+def graph_img(filename):#이미지 출력
+    return send_from_directory(GRAPH_ROOT,filename)
+@app.route("/graphname/<coinname>")
+def getGraph(coinname):#이미지 경로 송출
+    coinname=coinname.upper()
+    convpath=GRAPH_ROOT+"/convsave/"+coinname
+    lstmpath=GRAPH_ROOT + "/lstmsave/"+coinname
+    convlist = [f for f in os.listdir(convpath) if re.match(
+        f'.+\.png', f)]
+    lstmlist = [f for f in os.listdir(convpath) if re.match(
+        f'.+\.png', f)]
+    return jsonify({"status":"success","data":{"convsave":convlist,"lstmsave":lstmlist}})
 #path 파라미터
 @app.route("/data/<dataname>")
 def getData(dataname):
@@ -26,7 +39,12 @@ def getData(dataname):
 @app.route("/<pagename>")
 def getHtml(pagename):
     print(pagename)
-    return render_template(r"/front/{}.html".format(pagename))
+    if not "favicon" in pagename:
+        return render_template(r"/front/{}.html".format(pagename),titles=titles)
+    return ""
+
+
+# 모델 분석 출력
 @app.route("/analize/<kind>",methods=["post"])
 def analizeAi(kind):
     #모델 경로 루트로 변경

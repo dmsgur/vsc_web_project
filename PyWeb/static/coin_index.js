@@ -136,18 +136,45 @@ function sprayData(data,data_name){
                     <p style='font-size:0.8rem;text-align:center'><span>시작가 ${parseFloat(data[unit].opening_price).toLocaleString("ko-KR")}</span><span style="color:${chgrat>0?"red":"green"}"> 변동율 ${data[unit].fluctate_rate_24H} %</span></p>
                     <p class="bar" style="border-radius:2px;float:${barsize<0?"right":"left"};width:${Math.abs(barsize)}%;height:0.2rem;background:${color}"></p>
                 </div>`
-        $(inHtml).appendTo("#contain").on("click",function(){
+        $(inHtml).appendTo("#contain").on("click",async function(){
             console.log($(this))
             console.log($(this).attr("coinname"))
             console.log($(this).attr("hanname"))
             console.log($(this).attr("rat"))
-            console.log($(this).attr("analtime"))            
+            console.log($(this).attr("analtime"))
+            let coinname = $(this).attr("coinname")
             $("#cover").css("display","block")
             $("#analBtn").css("display","block")
-                 .find("h1").text($(this).attr("coinname")+`( ${$(this).attr("hanname")} ) 
+                 .find("h1").text(coinname+`( ${$(this).attr("hanname")} )
                     ${$(this).attr("rat")} %`).css("color",$(this).attr("rat")>0?"red":"green")
-            $("#btncontain #lstm_anal").attr("coinname",$(this).attr("coinname"))
-            $("#btncontain #conv_anal").attr("coinname",$(this).attr("coinname"))
+            $("#btncontain #lstm_anal").attr("coinname",coinname)
+            $("#btncontain #conv_anal").attr("coinname",coinname)
+            //fetch("address",{option})   js object {key:value}
+            //  options - method:"post|get"
+            //          - headers:"Content-Type":"application/json"
+            //          - body:보낼데이터
+            let res = await fetch(`/graphname/${coinname}`).catch((e)=>console.log(e))
+            let gnames = await res.json()
+            console.log(gnames)
+            console.log(gnames.data[0])
+            //totalcnt = gnames.data.lstmsave.length+gnames.data.convsave.length
+            maxRow = 2
+            maxcol = 10
+            let w =$("#train_graph").width()-5
+            let h =$("#train_graph").height()-maxcol*maxcol
+            dispwidth = parseInt(w/maxcol)
+            dispheight = parseInt(h/maxRow)
+             $("#train_graph").html("")
+            if(gnames.status=="success"){
+                for (im of gnames.data.convsave){
+                    $("#train_graph").append(`<div style="float:left"><img style="width:${dispwidth}px;height:${dispheight}px;margin:3px 2px" src='/graph/convsave/${coinname.toUpperCase()}/${im}' /></div>`)
+                }
+                for (im of gnames.data.lstmsave){
+                    $("#train_graph").append(`<div style="float:left"><img style="width:${dispwidth}px;height:${dispheight}px;margin:3px 2px" src='/graph/convsave/${coinname.toUpperCase()}/${im}' /></div>`)
+                }
+//                $("#train_graph").append(`<img src='/graph/lstmsave/${coinname.toUpperCase()}/${gnames.data.lstmsave[0]}' />`)
+            }
+
         })
         //$("#contain").append(inHtml)
     }
