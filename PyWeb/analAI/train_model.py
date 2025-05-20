@@ -469,14 +469,19 @@ if "__main__"==__name__:
     #{'BTC': ['Bitcoin', '비트코인'], 'ETH': ['Ethereum', '이더리움'], 'ETC': ['Ethereum Classic', '이더리움 클래식'], 'XRP': ['XR
     # # 최초 모델 훈련 자동
     print(names.keys())
-    names_arr = [list(names.keys())]
+    #names_arr = [list(names.keys())]
+    names_arr=["BTC", "ETH", "XRP"]
     GETCNT = 400
     time_steps = ["middle","long"]
     # req_times = [10, 30, 60, 240,"days","weeks","months"]
     req_times = [60,"days"]
+    progressval = len(time_steps)*len(req_times)*len(names_arr)
+    progresscnt=0
     for cname in ["BTC","ETH","XRP"]:
         for time_step in time_steps:
             for req in req_times:
+                progresscnt+=1
+                print(f"xxxxxxxxxxxxxxxxxxxxxxxxxx 현재 진행율 :{progresscnt//progressval:%} {progresscnt}/{progressval}xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
                 # middle 60 (conv lstm)
                 if req == "months" and time_step == "llong": continue
                 t_admin = ConfingData(coinname=cname, timestepstr=time_step, req_time=req)
