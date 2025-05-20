@@ -1,5 +1,5 @@
 from selectors import SelectSelector
-import lstm_and_conv as lac
+from analAI.train_model import web_service
 from flask import Flask,render_template,url_for,request,jsonify
 app = Flask(__name__)
 titles="선형회귀모델"
@@ -13,6 +13,8 @@ titles="선형회귀모델"
 #       request.values.get("속성명","기본값",수신타입)->("data","1",int)
 @app.route("/")
 def index():
+    print("인덱스")
+    analizeAi("lstm")
     return "hellow python flask webpage"
 @app.route("/hello")
 def hello():
@@ -27,20 +29,14 @@ def getHtml(pagename):
     return render_template(r"/front/{}.html".format(pagename))
 @app.route("/analize/<kind>",methods=["post"])
 def analizeAi(kind):
-    rq = request.get_json()
+    #모델 경로 루트로 변경
+    print("ai 호출")
+    #rq = request.get_json()
     print(kind)
     data=None
-    if kind=="lstm":
-        data=""
-        res = lac.getLstm()
-        #lstm 모델 결과
-    elif kind=="conv":
-        data=""
-        res = lac.getConv()
-        #conv 모델 결과
-    else:
-        data="invalid parameter"
-    return jsonify({"status":"success","data":data})
+    res_dict = web_service("BTC", "middle", "conv", 60)  # coinname 이름 timestep_str="middle",
+    print(res_dict)
 
+    return jsonify({"status":"success","data":data})
 if "__main__"==__name__:
     app.run("127.0.0.1",9999,debug=True)

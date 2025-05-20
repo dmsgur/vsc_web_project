@@ -10,7 +10,7 @@ import re
 import time
 from datetime import date
 import tensorflow as tf
-from lstm_and_conv import createModel_conv,createModel_lstm,createCallback
+from analAI.lstm_and_conv import createModel_conv,createModel_lstm,createCallback
 NAME_URL = r"https://api.bithumb.com/v1/market/all"
 MAIN_URL = r"https://api.bithumb.com/v1/candles/"
 
@@ -389,6 +389,7 @@ class UserService():
         return ret_text,ret_dict;
 def web_service(coinname,timestep_str,modeltype,req_time):#coinname 이름 timestep_str="middle",
     # 4. ======== 사용자 예측값 출력
+    print("호출 ===")
     user = UserService()
     # useage user.pred_service(coinname="BTC",train_type="lstm"|"conv",timestepstr="middle",req_time=60|"days")
     _,ret_dict = user.pred_service(coinname=coinname,train_type=modeltype,timestepstr=timestep_str,req_time=req_time)
