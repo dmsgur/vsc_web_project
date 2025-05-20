@@ -155,7 +155,7 @@ def train_model(self,smodel,x_data,y_data,cbs,paths,batsize=None,epoch=None,trai
         print("*********************** 기존모델 현재가격 예측 테스트 ***********************")
         print(upgrade_sw["old_text"])
     print("*********************** 현재모델 현재가격 예측 테스트 ***********************")
-    newres_text = user.pred_service(coinname=self.coinname, train_type=train_type, timestepstr=self.timestepstr,
+    newres_text,_ = user.pred_service(coinname=self.coinname, train_type=train_type, timestepstr=self.timestepstr,
                       req_time=self.req_time, param_model=smodel,test_train=True)
     print(newres_text)
     print("**************************** 테스트 출력 종료 ****************************")
@@ -289,7 +289,7 @@ class ConfingData():
                 all_x_data, all_y_data, all_y_raw = split_xyData(all_preprocessed_sets, all_y_raw, step=self.timestepstr)
                 old_MSE,old_MAE = load_model.evaluate(all_x_data,all_y_data)#기존모델 손실도
                 user = UserService()
-                old_text = user.pred_service(coinname=self.coinname, train_type=train_type, timestepstr=self.timestepstr,
+                old_text,_ = user.pred_service(coinname=self.coinname, train_type=train_type, timestepstr=self.timestepstr,
                                   req_time=self.req_time, param_model=load_model,test_train=True)#기존모델 손실계산
                 train_model(self, load_model, x_data, y_data, cbs, paths, batsize, epoch,train_type,user,{"old_MSE":old_MSE,"old_MAE":old_MAE,"all_x_data":all_x_data,"all_y_data":all_y_data,"all_y_raw":all_y_raw,"old_text":old_text})#True 업그레이드 여부
             else:
@@ -352,39 +352,56 @@ class UserService():
             acc_calgap = np.abs(y_pred / y_raw-1)
             acc_calgap[acc_calgap<tolerance]=0
             acc_mean = acc_calgap.mean(axis=0)
+            ret_dict = {"pv":round(acc_mean.mean(),2)}
             ret_text+=f"현재 모델의 ± 1% 유의수준 정확률 {acc_mean.mean():.2%}\n"
             pred_avgrat = (y_pred / y_raw - 1).mean(axis=0)
-            # user_pred = load_model.predict(np.array([x_user]))
-            # # print(y_pred.shape)
-            # rec_pred = recovery_info(user_pred, coinname)
+            user_pred = load_model.predict(np.array([x_user]))
+            # print(y_pred.shape)
+            rec_pred = recovery_info(user_pred, coinname)
             #opening_price,high_price,low_price,candle_acc_trade_price,trade_price
-            # ret_text+="1. 시작가 비교 --------------------------------------------------------\n"
-            # ret_text+=f"opening_price pred:{rec_pred[0][0]:.4f} recent err rate:{pred_avgrat[0]:.2%}\n"
-            # ret_text+=f"실제값 {y_data[-1][0]}, 예측값 {y_pred[-1][0]}\n"
-            # ret_text+="2. 최고가 비교 --------------------------------------------------------\n"
-            # ret_text+=f"high_price pred:{rec_pred[0][1]:.4f} recent err rate:{pred_avgrat[1]:.2%}\n"
-            # ret_text+=f"실제값 {y_data[-1][1]}, 예측값 {y_pred[-1][1]}\n"
-            # ret_text+="3. 최저가 비교 --------------------------------------------------------\n"
-            # ret_text+=f"low_price pred:{rec_pred[0][2]:.4f} recent err rate:{pred_avgrat[2]:.2%}\n"
-            # ret_text+=f"실제값 {y_data[-1][2]}, 예측값 {y_pred[-1][2]}\n"
-            # ret_text+="4. 가격 총 거래량 비교 --------------------------------------------------\n"
-            # ret_text+=f"candle_acc_trade_price pred:{rec_pred[0][3]:.4f} recent err rate:{pred_avgrat[3]:.2%}\n"
-            # ret_text+=f"실제값 {y_data[-1][3]}, 예측값 {y_pred[-1][3]}\n"
-            # ret_text+="5. 현재가 비교 --------------------------------------------------------\n"
-            # ret_text+=f"trade_price pred:{rec_pred[0][4]:.4f} recent err rate:{pred_avgrat[4]:.2%}\n"
-            # ret_text+=f"실제값 {y_data[-1][4]}, 예측값 {y_pred[-1][4]}\n"
-        return ret_text;
-
+            ret_dict["info"]={"coinname":coinname,"timestepstr":timestepstr,"req_time":req_time,"model_type":train_type}
+            ret_text+="1. 시작가 비교 --------------------------------------------------------\n"
+            ret_text+=f"opening_price pred:{rec_pred[0][0]:.4f} recent err rate:{pred_avgrat[0]:.2%}\n"
+            ret_text+=f"실제값 {y_data[-1][0]}, 예측값 {y_pred[-1][0]}\n"
+            ret_dict["open_pri"] = {"cur_pred":round(rec_pred[0][0],4),"errrat":round(pred_avgrat[0],2),
+                                    "pre_true":y_data[-1][0],"pre_pred":y_pred[-1][0]}
+            ret_text+="2. 최고가 비교 --------------------------------------------------------\n"
+            ret_text+=f"high_price pred:{rec_pred[0][1]:.4f} recent err rate:{pred_avgrat[1]:.2%}\n"
+            ret_text+=f"실제값 {y_data[-1][1]}, 예측값 {y_pred[-1][1]}\n"
+            ret_dict["high_pri"] = {"cur_pred": round(rec_pred[0][1], 4), "errrat": round(pred_avgrat[1], 2),
+                                    "pre_true": y_data[-1][1], "pre_pred": y_pred[-1][1]}
+            ret_text+="3. 최저가 비교 --------------------------------------------------------\n"
+            ret_text+=f"low_price pred:{rec_pred[0][2]:.4f} recent err rate:{pred_avgrat[2]:.2%}\n"
+            ret_text+=f"실제값 {y_data[-1][2]}, 예측값 {y_pred[-1][2]}\n"
+            ret_dict["low_pri"] = {"cur_pred": round(rec_pred[0][2], 4), "errrat": round(pred_avgrat[2], 2),
+                                    "pre_true": y_data[-1][2], "pre_pred": y_pred[-1][2]}
+            ret_text+="4. 가격 총 거래량 비교 --------------------------------------------------\n"
+            ret_text+=f"candle_acc_trade_price pred:{rec_pred[0][3]:.4f} recent err rate:{pred_avgrat[3]:.2%}\n"
+            ret_text+=f"실제값 {y_data[-1][3]}, 예측값 {y_pred[-1][3]}\n"
+            ret_dict["tot_pri"] = {"cur_pred": round(rec_pred[0][3], 4), "errrat": round(pred_avgrat[3], 2),
+                                   "pre_true": y_data[-1][3], "pre_pred": y_pred[-1][3]}
+            ret_text+="5. 현재가 비교 --------------------------------------------------------\n"
+            ret_text+=f"trade_price pred:{rec_pred[0][4]:.4f} recent err rate:{pred_avgrat[4]:.2%}\n"
+            ret_text+=f"실제값 {y_data[-1][4]}, 예측값 {y_pred[-1][4]}\n"
+            ret_dict["cur_pri"] = {"cur_pred": round(rec_pred[0][4], 4), "errrat": round(pred_avgrat[4], 2),
+                                   "pre_true": y_data[-1][4], "pre_pred": y_pred[-1][4]}
+        return ret_text,ret_dict;
+def web_service(coinname,timestep_str,modeltype,req_time):#coinname 이름 timestep_str="middle",
+    # 4. ======== 사용자 예측값 출력
+    user = UserService()
+    # useage user.pred_service(coinname="BTC",train_type="lstm"|"conv",timestepstr="middle",req_time=60|"days")
+    _,ret_dict = user.pred_service(coinname=coinname,train_type=modeltype,timestepstr=timestep_str,req_time=req_time)
+    return ret_dict
 import ftplib
 def sendFtp():
     session = ftplib.FTP()
-    session.connect('127.0.0.1', 21)  # 두 번째 인자는 port number
-    session.login("FTP서버_이름", "FTP서버_비밀번호")  # FTP 서버에 접속
-    with open('./파일경로/화난무민.jpg', mode='rb') as fp:
-        session.encoding = 'utf-8'
-        session.storbinary('STOR ' + '/img/CodingMooMin.jpg', fp)  # 파일 업로드
-    session.quit()  # 서버 나가기
-    print('파일전송함')
+    # session.connect('127.0.0.1', 21)  # 두 번째 인자는 port number
+    # session.login("FTP서버_이름", "FTP서버_비밀번호")  # FTP 서버에 접속
+    # with open('./파일경로/화난무민.jpg', mode='rb') as fp:
+    #     session.encoding = 'utf-8'
+    #     session.storbinary('STOR ' + '/img/CodingMooMin.jpg', fp)  # 파일 업로드
+    # session.quit()  # 서버 나가기
+    # print('파일전송함')
 if "__main__"==__name__:
     # # learnner
     # # createModel_conv,createModel_lstm,createCallback
@@ -446,18 +463,17 @@ if "__main__"==__name__:
 
     # 4. ======== 사용자 예측값 출력
     #user = UserService()
-    #res_text = user.pred_service(coinname="BTC",train_type=["conv"],timestepstr="middle",req_time="days")
+    #res_text,_ = user.pred_service(coinname="BTC",train_type=["conv"],timestepstr="middle",req_time="days")
     #print(res_text)
     #{'BTC': ['Bitcoin', '비트코인'], 'ETH': ['Ethereum', '이더리움'], 'ETC': ['Ethereum Classic', '이더리움 클래식'], 'XRP': ['XR
     # # 최초 모델 훈련 자동
     print(names.keys())
     names_arr = [list(names.keys())]
-    GETCNT = 500
-    time_steps = ["short","middle","long","llong"]
-    time_steps = ["middle"]
+    GETCNT = 400
+    time_steps = ["middle","long"]
     # req_times = [10, 30, 60, 240,"days","weeks","months"]
-    req_times = [60]
-    for cname in names_arr[0]:
+    req_times = [60,"days"]
+    for cname in ["BTC","ETH","XRP"]:
         for time_step in time_steps:
             for req in req_times:
                 # middle 60 (conv lstm)
@@ -465,7 +481,7 @@ if "__main__"==__name__:
                 t_admin = ConfingData(coinname=cname, timestepstr=time_step, req_time=req)
                 t_models = {"conv":createModel_conv(time_step), "lstm":createModel_lstm(time_step)}
                 tcbs = createCallback(cname)
-                t_admin.init_train(smodels=t_models, cbs=tcbs, epoch=2, batsize=None)
+                t_admin.init_train(smodels=t_models, cbs=tcbs, epoch=20, batsize=None)
 
      # #업그레이드 모델 훈련 자동황
      #    # print(names.keys())
@@ -484,3 +500,6 @@ if "__main__"==__name__:
     #                t_admin = ConfingData(coinname=cname, timestepstr=time_step, req_time=req)
     #                tcbs = createCallback(cname)
     #                t_admin.upgrade_train(train_types=["conv","lstm"], epoch=2, batsize=None)
+    # 웹 서비스 구현
+    res = web_service("BTC", "middle", "conv", 60)  # coinname 이름 timestep_str="middle",
+    print(res)
