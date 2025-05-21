@@ -2,6 +2,8 @@ var msgbox;
 var dataArr;
 var data_name;
 var filterArr;
+let dispwidth =""
+let dispheight =""
 $(async ()=>{
     $("#lstm_anal,#conv_anal").on("click",async function(){
         let coinname =$(this).attr("coinname")
@@ -155,8 +157,6 @@ function sprayData(data,data_name){
             //          - body:보낼데이터
             let res = await fetch(`/graphname/${coinname}`).catch((e)=>console.log(e))
             let gnames = await res.json()
-            console.log(gnames)
-            console.log(gnames.data[0])
             //totalcnt = gnames.data.lstmsave.length+gnames.data.convsave.length
             maxRow = 2
             maxcol = 10
@@ -167,13 +167,28 @@ function sprayData(data,data_name){
              $("#train_graph").html("")
             if(gnames.status=="success"){
                 for (im of gnames.data.convsave){
-                    $("#train_graph").append(`<div style="float:left"><img style="width:${dispwidth}px;height:${dispheight}px;margin:3px 2px" src='/graph/convsave/${coinname.toUpperCase()}/${im}' /></div>`)
+                    $("#train_graph").append(`<div class="imgunit" style="float:left"><img style="width:${dispwidth}px;height:${dispheight}px;margin:3px 2px" src='/graph/convsave/${coinname.toUpperCase()}/${im}' /></div>`)
                 }
                 for (im of gnames.data.lstmsave){
-                    $("#train_graph").append(`<div style="float:left"><img style="width:${dispwidth}px;height:${dispheight}px;margin:3px 2px" src='/graph/convsave/${coinname.toUpperCase()}/${im}' /></div>`)
+                    $("#train_graph").append(`<div class="imgunit" style="float:left"><img style="width:${dispwidth}px;height:${dispheight}px;margin:3px 2px" src='/graph/convsave/${coinname.toUpperCase()}/${im}' /></div>`)
                 }
 //                $("#train_graph").append(`<img src='/graph/lstmsave/${coinname.toUpperCase()}/${gnames.data.lstmsave[0]}' />`)
             }
+            //conresize  imgresize
+            $(".imgunit").on("click",function(){
+                $(this).addClass("conresize").find("img").css({width:"62vw",height:"30vw"})
+                .addClass("imgc")
+            })
+            $(".imgunit img").on("click",function(e){
+                if($(this).hasClass("imgc")){
+                    e.stopPropagation()
+                    $(this).removeClass("imgc")
+                    $(this).css({width:dispwidth+"px",height:dispheight+"px"})
+                    .parent(".imgunit").removeClass("conresize")
+                }
+            })
+
+
 
         })
         //$("#contain").append(inHtml)

@@ -30,7 +30,8 @@ h1{text-align: center;}
 .tailname,.cname{height:1rem}
 bar{display:inlin-block;position:relative}
 #cover{background:orange;opacity: 0.7;width:100vw;height:100vh;position: fixed;left:0;top:0}
-#analBtn{position: fixed;left:0;top:0;margin-left:calc((100vw - 43rem) / 2);width:43rem}
+#analBtn{position: fixed;left:0;top:0;width:99vw}
 #btncontain{margin-top:1rem;text-align:center}
 #btncontain button{width:15rem;margin-right:2rem;height:3.5rem;font-size:1.2rem}
 #closebtn:hover{color:red}
+.conresize{position:absolute;top:11rem;margin:auto;padding:1.5rem;background:silver}
