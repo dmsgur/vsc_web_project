@@ -176,7 +176,7 @@ function sprayData(data,data_name){
             }
             //conresize  imgresize
             $(".imgunit").on("click",function(){
-                $(this).addClass("conresize").find("img").css({width:"62vw",height:"30vw"})
+                $(this).addClass("conresize").find("img").css({width:"67vw",height:"32vw"})
                 .addClass("imgc")
             })
             $(".imgunit img").on("click",function(e){

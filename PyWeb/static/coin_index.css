@@ -34,4 +34,4 @@ bar{display:inlin-block;position:relative}
 #btncontain{margin-top:1rem;text-align:center}
 #btncontain button{width:15rem;margin-right:2rem;height:3.5rem;font-size:1.2rem}
 #closebtn:hover{color:red}
-.conresize{position:absolute;top:11rem;margin:auto;padding:1.5rem;background:silver}
+.conresize{position:absolute;top:10.5rem;margin:auto;padding:0.5rem;background:silver}
