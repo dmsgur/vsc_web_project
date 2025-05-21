@@ -353,7 +353,7 @@ class UserService():
             acc_calgap = np.abs(y_pred / y_raw-1)
             acc_calgap[acc_calgap<tolerance]=0
             acc_mean = acc_calgap.mean(axis=0)
-            ret_dict = {"pv":round(acc_mean.mean(),2)}
+            ret_dict = {"pv":round(acc_mean.mean(),2).astype("float")}
             ret_text+=f"현재 모델의 ± 1% 유의수준 정확률 {acc_mean.mean():.2%}\n"
             pred_avgrat = (y_pred / y_raw - 1).mean(axis=0)
             user_pred = load_model.predict(np.array([x_user]))
@@ -364,28 +364,28 @@ class UserService():
             ret_text+="1. 시작가 비교 --------------------------------------------------------\n"
             ret_text+=f"opening_price pred:{rec_pred[0][0]:.4f} recent err rate:{pred_avgrat[0]:.2%}\n"
             ret_text+=f"실제값 {y_raw[-1][0]}, 예측값 {y_pred[-1][0]}\n"
-            ret_dict["open_pri"] = {"cur_pred":round(rec_pred[0][0],4),"errrat":round(pred_avgrat[0],2),
-                                    "pre_true":y_raw[-1][0],"pre_pred":y_pred[-1][0]}
+            ret_dict["open_pri"] = {"cur_pred":round(rec_pred[0][0],4).astype("float"),"errrat":round(pred_avgrat[0],2).astype("float"),
+                                    "pre_true":y_raw[-1][0].astype("float"),"pre_pred":y_pred[-1][0].astype("float")}
             ret_text+="2. 최고가 비교 --------------------------------------------------------\n"
             ret_text+=f"high_price pred:{rec_pred[0][1]:.4f} recent err rate:{pred_avgrat[1]:.2%}\n"
             ret_text+=f"실제값 {y_raw[-1][1]}, 예측값 {y_pred[-1][1]}\n"
-            ret_dict["high_pri"] = {"cur_pred": round(rec_pred[0][1], 4), "errrat": round(pred_avgrat[1], 2),
-                                    "pre_true": y_raw[-1][1], "pre_pred": y_pred[-1][1]}
+            ret_dict["high_pri"] = {"cur_pred": round(rec_pred[0][1], 4).astype("float"), "errrat": round(pred_avgrat[1], 2).astype("float"),
+                                    "pre_true": y_raw[-1][1].astype("float"), "pre_pred": y_pred[-1][1].astype("float")}
             ret_text+="3. 최저가 비교 --------------------------------------------------------\n"
             ret_text+=f"low_price pred:{rec_pred[0][2]:.4f} recent err rate:{pred_avgrat[2]:.2%}\n"
             ret_text+=f"실제값 {y_raw[-1][2]}, 예측값 {y_pred[-1][2]}\n"
-            ret_dict["low_pri"] = {"cur_pred": round(rec_pred[0][2], 4), "errrat": round(pred_avgrat[2], 2),
-                                    "pre_true": y_raw[-1][2], "pre_pred": y_pred[-1][2]}
+            ret_dict["low_pri"] = {"cur_pred": round(rec_pred[0][2], 4).astype("float"), "errrat": round(pred_avgrat[2], 2).astype("float"),
+                                    "pre_true": y_raw[-1][2].astype("float"), "pre_pred": y_pred[-1][2].astype("float")}
             ret_text+="4. 가격 총 거래량 비교 --------------------------------------------------\n"
             ret_text+=f"candle_acc_trade_price pred:{rec_pred[0][3]:.4f} recent err rate:{pred_avgrat[3]:.2%}\n"
             ret_text+=f"실제값 {y_raw[-1][3]}, 예측값 {y_pred[-1][3]}\n"
-            ret_dict["tot_pri"] = {"cur_pred": round(rec_pred[0][3], 4), "errrat": round(pred_avgrat[3], 2),
-                                   "pre_true": y_raw[-1][3], "pre_pred": y_pred[-1][3]}
+            ret_dict["tot_pri"] = {"cur_pred": round(rec_pred[0][3], 4).astype("float"), "errrat": round(pred_avgrat[3], 2).astype("float"),
+                                   "pre_true": y_raw[-1][3].astype("float"), "pre_pred": y_pred[-1][3].astype("float")}
             ret_text+="5. 현재가 비교 --------------------------------------------------------\n"
             ret_text+=f"trade_price pred:{rec_pred[0][4]:.4f} recent err rate:{pred_avgrat[4]:.2%}\n"
             ret_text+=f"실제값 {y_raw[-1][4]}, 예측값 {y_pred[-1][4]}\n"
-            ret_dict["cur_pri"] = {"cur_pred": round(rec_pred[0][4], 4), "errrat": round(pred_avgrat[4], 2),
-                                   "pre_true": y_raw[-1][4], "pre_pred": y_pred[-1][4]}
+            ret_dict["cur_pri"] = {"cur_pred": round(rec_pred[0][4], 4).astype("float"), "errrat": round(pred_avgrat[4], 2).astype("float"),
+                                   "pre_true": y_raw[-1][4].astype("float"), "pre_pred": y_pred[-1][4].astype("float")}
         return ret_text,ret_dict;
 def web_service(coinname,timestep_str,modeltype,req_time):#coinname 이름 timestep_str="middle",
     # 4. ======== 사용자 예측값 출력
@@ -393,6 +393,7 @@ def web_service(coinname,timestep_str,modeltype,req_time):#coinname 이름 times
     user = UserService()
     # useage user.pred_service(coinname="BTC",train_type="lstm"|"conv",timestepstr="middle",req_time=60|"days")
     _,ret_dict = user.pred_service(coinname=coinname,train_type=modeltype,timestepstr=timestep_str,req_time=req_time)
+
     return ret_dict
 import ftplib
 def sendFtp():

@@ -17,13 +17,8 @@ $(async ()=>{
                                     body:JSON.stringify({coinname,analtime})})
         //송신결과를 서버로 부터 수신
         let res = await conn.json()
-        console.log(res)
         if(res.status=="success"){
-            if(res.data.includes("invalid")){
-                alert("분석파라미터가 유효하지 않습니다.")
-            }else{
-                alert("분석결과 출력")
-            }
+            console.log(res)
         }else{
             alert("연결이 원활치 않습니다.")
         }

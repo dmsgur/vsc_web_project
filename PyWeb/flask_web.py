@@ -54,7 +54,6 @@ def analizeAi(kind):
     data=None
     res_dict = web_service("BTC", "middle", "conv", 60)  # coinname 이름 timestep_str="middle",
     print(res_dict)
-
-    return jsonify({"status":"success","data":data})
+    return jsonify({"status":"success","data":res_dict})
 if "__main__"==__name__:
     app.run("127.0.0.1",9999,debug=True)
