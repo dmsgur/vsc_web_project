@@ -27,8 +27,8 @@ $(async ()=>{
         let res = await conn.json()
         if(res.status=="success"){
             let red=res.data
-            let ret_text= `분석코인(${red.info.coinname}) 분석모델:(${red.info.model_type}) 
-            분석시간(${red.info.req_time} 분석길이(${red.info.timestepstr}))`
+            let ret_text= `<p style="padding:0.3rem;background:Aquamarine">분석코인(${red.info.coinname}) 분석모델:(${red.info.model_type}) 
+            분석시간(${red.info.req_time} 분석길이(${red.info.timestepstr}))</p>`
             ret_text+=`<p>현재 모델의 ± 1% 유의수준 정확률 ${red.pv*100}%</p>`
 
             ret_text+=`<p>1. 예측 거래가 비교 --------------------------------------------------------<br>
@@ -178,10 +178,11 @@ function sprayData(data,data_name){
                     <p class="bar" style="border-radius:2px;float:${barsize<0?"right":"left"};width:${Math.abs(barsize)}%;height:0.2rem;background:${color}"></p>
                 </div>`
         $(inHtml).appendTo("#contain").on("click",async function(){
-            console.log($(this))
-            console.log($(this).attr("coinname"))
-            console.log($(this).attr("hanname"))
-            console.log($(this).attr("rat"))
+            $("#analresult").html("")
+            $("#analresult").css("display","none")            
+            $("#sub_btn").css("display","none")
+            $("#main_btn").css("display","block")
+            $("#train_graph").html("")
             let coinname = $(this).attr("coinname")
             $("#cover").css("display","block")
             $("#analBtn").css("display","block")
@@ -194,7 +195,14 @@ function sprayData(data,data_name){
             //          - headers:"Content-Type":"application/json"
             //          - body:보낼데이터
             let res = await fetch(`/graphname/${coinname}`).catch((e)=>console.log(e))
-            let gnames = await res.json()
+            let gnames=""
+            try{
+             gnames = await res.json()
+            }catch(e){
+                alert("훈련전입니다. 차후에 이용바랍니다.")
+                $("#closebtn").trigger("click")
+                return;
+            }
             //totalcnt = gnames.data.lstmsave.length+gnames.data.convsave.length
             maxRow = 2
             maxcol = 10

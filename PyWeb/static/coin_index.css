@@ -36,3 +36,5 @@ bar{display:inlin-block;position:relative}
 #closebtn:hover{color:red}
 .conresize{position:absolute;top:10.5rem;margin:auto;padding:0.5rem;background:silver}
 select{width:10rem;height:2rem;font-size:1.05rem}
+#analresult p {margin:0.5rem}
+#analresult{height:61vh;overflow-y: scroll;}
