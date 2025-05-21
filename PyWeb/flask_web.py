@@ -49,10 +49,13 @@ def getHtml(pagename):
 def analizeAi(kind):
     #모델 경로 루트로 변경
     print("ai 호출")
-    #rq = request.get_json()
+    rq = request.get_json()
     print(kind)
-    data=None
-    res_dict = web_service("BTC", "middle", "conv", 60)  # coinname 이름 timestep_str="middle",
+    print(rq["coinname"])
+    if rq["req_time"].isdigit():
+        rq["req_time"]=int(rq["req_time"])
+    #web_service(coinname,timestep_str,modeltype,req_time)
+    res_dict = web_service(rq["coinname"], rq["timestepstr"], kind,rq["req_time"] )  # coinname 이름 timestep_str="middle",
     print(res_dict)
     return jsonify({"status":"success","data":res_dict})
 if "__main__"==__name__:

@@ -5,24 +5,68 @@ var filterArr;
 let dispwidth =""
 let dispheight =""
 $(async ()=>{
-    $("#lstm_anal,#conv_anal").on("click",async function(){
-        let coinname =$(this).attr("coinname")
-        let analtime=""
-        let ele = $(`.unitbox[coinname=${$(this).attr("coinname")}]`)
-        analtime=ele.attr("analtime")
-        console.log(coinname,analtime)
-        let target = this.id.split("_")[0]
+    $("#cancel").on("click",()=>{
+        $("#main_btn").css("display","block")
+        $("#sub_btn").css("display","none")
+    })
+    $("#runn").on("click",async()=>{
+       let send_data=""
+       try{
+        send_data = JSON.parse($("info").attr("data"))
+       }catch(e){}
+       console.log(send_data)
+       console.log(send_data)
+       if(!send_data || !$("#timestep").val() || !$("#req_time").val()){
+        alert("시계열 길이 또는 분석시간이 누락되었습니다.")
+        return;
+       }
         //서버로 데이터 송신
-        let conn = await fetch(`/analize/${target}`,{method:"post",headers:{"Content-Type":"application/json"},
-                                    body:JSON.stringify({coinname,analtime})})
+        let conn = await fetch(`/analize/${send_data.modeltype}`,{method:"post",headers:{"Content-Type":"application/json"},
+                                    body:JSON.stringify({coinname:send_data.coinname,timestepstr:$("#timestep").val(),req_time:$("#req_time").val()})})
         //송신결과를 서버로 부터 수신
         let res = await conn.json()
         if(res.status=="success"){
-            console.log(res)
+            let red=res.data
+            let ret_text= `분석코인(${red.info.coinname}) 분석모델:(${red.info.model_type}) 
+            분석시간(${red.info.req_time} 분석길이(${red.info.timestepstr}))`
+            ret_text+=`<p>현재 모델의 ± 1% 유의수준 정확률 ${red.pv*100}%</p>`
+
+            ret_text+=`<p>1. 예측 거래가 비교 --------------------------------------------------------<br>
+            예측 시작가:${red.cur_pri.cur_pred} 오차율:${red.cur_pri.errrat*100}%<br>
+            현재 실제값 ${red.cur_pri.pre_true}, 예측값 ${red.cur_pri.pre_pred}`
+
+            ret_text+=`<p>2. 예측 시작가 비교 --------------------------------------------------------<br>
+            예측 시작가:${red.open_pri.cur_pred} 오차율:${red.open_pri.errrat*100}%<br>
+            현재 실제값 ${red.open_pri.pre_true}, 예측값 ${red.open_pri.pre_pred}`
+           
+            ret_text+=`<p>3. 예측 최고가 비교 --------------------------------------------------------<br>
+            예측 시작가:${red.high_pri.cur_pred} 오차율:${red.high_pri.errrat*100}%<br>
+            현재 실제값 ${red.high_pri.pre_true}, 예측값 ${red.high_pri.pre_pred}`
+
+            ret_text+=`<p>4. 예측 최저가 비교 --------------------------------------------------------<br>
+            예측 시작가:${red.low_pri.cur_pred} 오차율:${red.low_pri.errrat*100}%<br>
+            현재 실제값 ${red.low_pri.pre_true}, 예측값 ${red.low_pri.pre_pred}`
+
+            ret_text+=`<p>5. 예측 총거래가 비교 --------------------------------------------------------<br>
+            예측 총거래가:${red.tot_pri.cur_pred} 오차율:${red.tot_pri.errrat*100}%<br>
+            현재 실제값 ${red.tot_pri.pre_true}, 예측값 ${red.tot_pri.pre_pred}`
+            
+            $("#analresult").css("display","block")
+            .html(ret_text)
         }else{
             alert("연결이 원활치 않습니다.")
         }
 
+    })
+    $("#lstm_anal,#conv_anal").on("click",function(){
+        let coinname =$(this).attr("coinname")
+        let ele = $(`.unitbox[coinname=${$(this).attr("coinname")}]`)
+        let objtxt = (JSON.stringify({coinname,modeltype:this.id.split("_")[0]}))
+        console.log(objtxt)
+        $("info").attr("data",objtxt)
+
+        $("#main_btn").css("display","none")
+        $("#sub_btn").css("display","block")
 
     })
     $("#closebtn").on("click",function(){
@@ -120,7 +164,7 @@ function sprayData(data,data_name){
         //.tailname .cname
         //50% 기준으로 bar 크기
         let barsize = chgrat*2
-        let inHtml = `<div class="unitbox" coinname="${unit}" hanname="${cobj.korean_name}" analtime="24h" rat="${chgrat}">
+        let inHtml = `<div class="unitbox" coinname="${unit}" hanname="${cobj.korean_name}" rat="${chgrat}">
                     <p class="cname" style='background:${color};opacity:${alpa}'></p>
                     <span class="recontent mtitle">${unit}</span>
                     <p class="tailname" style='background:${color};opacity:${alpa}'></p>
@@ -138,7 +182,6 @@ function sprayData(data,data_name){
             console.log($(this).attr("coinname"))
             console.log($(this).attr("hanname"))
             console.log($(this).attr("rat"))
-            console.log($(this).attr("analtime"))
             let coinname = $(this).attr("coinname")
             $("#cover").css("display","block")
             $("#analBtn").css("display","block")

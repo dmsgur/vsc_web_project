@@ -32,6 +32,7 @@ bar{display:inlin-block;position:relative}
 #cover{background:orange;opacity: 0.7;width:100vw;height:100vh;position: fixed;left:0;top:0}
 #analBtn{position: fixed;left:0;top:0;width:99vw}
 #btncontain{margin-top:1rem;text-align:center}
-#btncontain button{width:15rem;margin-right:2rem;height:3.5rem;font-size:1.2rem}
+#btncontain button{width:13rem;margin-right:2rem;height:3rem;font-size:1.1rem}
 #closebtn:hover{color:red}
 .conresize{position:absolute;top:10.5rem;margin:auto;padding:0.5rem;background:silver}
+select{width:10rem;height:2rem;font-size:1.05rem}

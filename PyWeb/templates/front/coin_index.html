@@ -35,10 +35,26 @@
         </span>
         <h1 style="background:seashell;width:40rem;margin:auto;border:1px solid black;margin-top:3rem"></h1>
         <div id="btncontain" style="margin-bottom:1rem">
-            <button id="lstm_anal"> 시계열회귀분석 [LSTM] </button>
-            <button id="conv_anal"> 합성곱회귀분석 [Conv1D] </button>
+            <div id="main_btn">
+                <button id="lstm_anal"> 시계열회귀분석 [LSTM] </button>
+                <button id="conv_anal"> 합성곱회귀분석 [Conv1D] </button>
+            </div>
+            <div id="sub_btn" style="display:none;background:yellow;padding:0.5rem;margin:0 1rem;border-radius:1rem">
+                <info></info>
+                <select id="timestep">
+                <option value="">시계열길이선택</option>
+                <option value="middle">middle(60)</option>
+                <option value="long">long(90)</option>
+            </select>
+                <select style="margin-right:1rem" id="req_time">
+                <option value="">분석시간대선택</option>
+                <option value="60">60분</option>
+                <option value="days">일간</option>
+            </select>
+                <button id="runn">예측실행</button>
+                <button id="cancel">취 소</button></div>
         </div>
-        <div id="analresult"></div>
+        <div id="analresult" style="display:none;width:100%;padding:0.5rem 1rem;background:white"></div>
         <div id="train_graph" style="height:60vh;width:70vw;margin:auto"></div>
     </div>
     
