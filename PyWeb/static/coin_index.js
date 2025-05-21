@@ -8,14 +8,14 @@ $(async ()=>{
     $("#cancel").on("click",()=>{
         $("#main_btn").css("display","block")
         $("#sub_btn").css("display","none")
+        $("#analresult").css("display","none")
+            .html("")
     })
     $("#runn").on("click",async()=>{
        let send_data=""
        try{
         send_data = JSON.parse($("info").attr("data"))
        }catch(e){}
-       console.log(send_data)
-       console.log(send_data)
        if(!send_data || !$("#timestep").val() || !$("#req_time").val()){
         alert("시계열 길이 또는 분석시간이 누락되었습니다.")
         return;
@@ -32,24 +32,24 @@ $(async ()=>{
             ret_text+=`<p>현재 모델의 ± 1% 유의수준 정확률 ${red.pv*100}%</p>`
 
             ret_text+=`<p>1. 예측 거래가 비교 --------------------------------------------------------<br>
-            예측 시작가:${red.cur_pri.cur_pred} 오차율:${red.cur_pri.errrat*100}%<br>
-            현재 실제값 ${red.cur_pri.pre_true}, 예측값 ${red.cur_pri.pre_pred}`
+            예측 시작가 ${red.cur_pri.cur_pred.toLocaleString()} 오차율 ${red.cur_pri.errrat*100}%<br>
+            현재 실제값 ${red.cur_pri.pre_true.toLocaleString()}, 예측값 ${red.cur_pri.pre_pred.toLocaleString()}`
 
             ret_text+=`<p>2. 예측 시작가 비교 --------------------------------------------------------<br>
-            예측 시작가:${red.open_pri.cur_pred} 오차율:${red.open_pri.errrat*100}%<br>
-            현재 실제값 ${red.open_pri.pre_true}, 예측값 ${red.open_pri.pre_pred}`
+            예측 시작가 ${red.open_pri.cur_pred.toLocaleString()} 오차율 ${red.open_pri.errrat*100}%<br>
+            현재 실제값 ${red.open_pri.pre_true.toLocaleString()}, 예측값 ${red.open_pri.pre_pred.toLocaleString()}`
            
             ret_text+=`<p>3. 예측 최고가 비교 --------------------------------------------------------<br>
-            예측 시작가:${red.high_pri.cur_pred} 오차율:${red.high_pri.errrat*100}%<br>
-            현재 실제값 ${red.high_pri.pre_true}, 예측값 ${red.high_pri.pre_pred}`
+            예측 시작가 ${red.high_pri.cur_pred.toLocaleString()} 오차율 ${red.high_pri.errrat*100}%<br>
+            현재 실제값 ${red.high_pri.pre_true.toLocaleString()}, 예측값 ${red.high_pri.pre_pred.toLocaleString()}`
 
             ret_text+=`<p>4. 예측 최저가 비교 --------------------------------------------------------<br>
-            예측 시작가:${red.low_pri.cur_pred} 오차율:${red.low_pri.errrat*100}%<br>
-            현재 실제값 ${red.low_pri.pre_true}, 예측값 ${red.low_pri.pre_pred}`
+            예측 시작가 ${red.low_pri.cur_pred.toLocaleString()} 오차율 :${red.low_pri.errrat*100}%<br>
+            현재 실제값 ${red.low_pri.pre_true.toLocaleString()}, 예측값 ${red.low_pri.pre_pred.toLocaleString()}`
 
             ret_text+=`<p>5. 예측 총거래가 비교 --------------------------------------------------------<br>
-            예측 총거래가:${red.tot_pri.cur_pred} 오차율:${red.tot_pri.errrat*100}%<br>
-            현재 실제값 ${red.tot_pri.pre_true}, 예측값 ${red.tot_pri.pre_pred}`
+            예측 총거래가 ${red.tot_pri.cur_pred.toLocaleString()} 오차율 ${red.tot_pri.errrat*100}%<br>
+            현재 실제값 ${red.tot_pri.pre_true.toLocaleString()}, 예측값 ${red.tot_pri.pre_pred.toLocaleString()}`
             
             $("#analresult").css("display","block")
             .html(ret_text)
