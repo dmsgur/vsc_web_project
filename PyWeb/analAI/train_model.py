@@ -18,6 +18,8 @@ SHORT = 30
 MIDDLE = 60
 LONG = 90
 LLONG = 180
+ROOT_MODEL = f"/analAI/" #웹서비스로컬 경로
+#ROOT_MODEL = f"/" #구글에서 통합본 훈련시
 
 # https://api.bithumb.com/v1/candles/minutes/{unit}
 # https://api.bithumb.com/v1/candles/days
@@ -71,16 +73,18 @@ def receive_data(target_name="BTC",req_time="days",getcnt=200,last_date_time=Non
     #pass #주소로부터 데이터 수신
 def createScaler(coinname,pdata_sets=None):
     scalers = []
-    paths = f"./analAI/configs/{coinname}_scaler"
+    paths = f".{ROOT_MODEL}configs/{coinname}_scaler"
     if os.path.exists(paths):
         with open(paths, "rb") as fp:
             scalers = pickle.load(fp)
     else:
+        #정규분포 z = (데이터 - 평균) / 표준편차
       if pdata_sets is not None:
-          if not os.path.exists("./analAI/configs"):
-            os.mkdir("/analAI/configs")
+          if not os.path.exists(f".{ROOT_MODEL}configs"):
+            os.mkdir(f".{ROOT_MODEL}configs")
           for i in range(pdata_sets.shape[1]):
-              scalers.append({"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()})
+              #scalers.append({"max":pdata_sets[:,i].max(),"min": pdata_sets[:,i].min()})
+              scalers.append({"mean": pdata_sets[:, i].mean(), "std": pdata_sets[:, i].std()})
           with open(paths,"wb") as fp:
               pickle.dump(scalers,fp)
       else : print("최초에는 데이터셋을 입력해야 합니다.")
@@ -90,9 +94,11 @@ def preData(data_sets,coinname):
             for d in data_sets])
     raw_sets = pdata_sets.copy()
     #min-max 스케일 X_scaled = X_std * (max - min) + min
+    # 정규분포 z = (데이터 - 평균) / 표준편차
     scalers=createScaler(coinname,pdata_sets)
     for i in range(pdata_sets.shape[1]):
-       pdata_sets[:,i] = (pdata_sets[:,i]-scalers[i]["min"])/(scalers[i]["max"]-scalers[i]["min"])
+       #pdata_sets[:,i] = (pdata_sets[:,i]-scalers[i]["min"])/(scalers[i]["max"]-scalers[i]["min"])
+       pdata_sets[:, i] = (pdata_sets[:, i] - scalers[i]["mean"]) / scalers[i]["std"]
     return pdata_sets,raw_sets
 def split_xyData(pre_datasets,raw_sets=None,step="middle"):
     time_step=0
@@ -113,7 +119,8 @@ def recovery_info(pred_data,coinname):
     scalers = createScaler(coinname)
     for dic in range(len(scalers)):
         #X_scaled = X_std * (max - min) + min
-        pred_data[:,dic] = pred_data[:,dic]*(scalers[dic]["max"]-scalers[dic]["min"])+scalers[dic]["min"]
+        #pred_data[:,dic] = pred_data[:,dic]*(scalers[dic]["max"]-scalers[dic]["min"])+scalers[dic]["min"]
+        pred_data[:, dic] = (pred_data[:, dic] - scalers[dic]["mean"]) / scalers[dic]["std"]
     return pred_data
 def train_model(self,smodel,x_data,y_data,cbs,paths,batsize=None,epoch=None,train_type="lstm",user=None,upgrade_sw=None):
     if not batsize:
@@ -133,6 +140,7 @@ def train_model(self,smodel,x_data,y_data,cbs,paths,batsize=None,epoch=None,trai
     plt.plot(fhist.history["val_MAE"], label="valid_MAE")
     plt.legend()
     plt.title("MAE")
+    plt.suptitle(f"model( {train_type} ) step( {self.timestepstr} ) time( {self.req_time})")
     plt.savefig(paths + "/tmp1.png")
     #plt.show()
     plt.clf()
@@ -142,6 +150,7 @@ def train_model(self,smodel,x_data,y_data,cbs,paths,batsize=None,epoch=None,trai
     plt.plot(y_data if upgrade_sw is None else upgrade_sw["all_y_data"], y_data if upgrade_sw is None else upgrade_sw["all_y_data"])
     plt.xlabel("True")
     plt.ylabel("Pred")
+    plt.title(f"model( {train_type} ) step( {self.timestepstr} ) time( {self.req_time})")
     plt.savefig(paths + "/tmp2.png")
     #plt.show()
     plt.clf()
@@ -227,7 +236,7 @@ class ConfingData():
         x_data, y_data, y_raw = split_xyData(preprocessed_sets, step=self.timestepstr)
         for train_type in smodels:
             print(self.coinname,train_type, "모델========= 훈련 진행중.............")
-            paths = "./analAI/%s/%s" % (train_type + "save", self.coinname)
+            paths = ".%s%s/%s" % (ROOT_MODEL,train_type + "save", self.coinname)
             if not os.path.exists(paths):
                 os.makedirs(paths)  # 여러개의 디렉토리 생성
             user = UserService()
@@ -240,7 +249,7 @@ class ConfingData():
             return
         print(self.coinname, self.timestepstr, self.name_req_time, "=========업그레이드 훈련을 시작합니다.")
         for train_type in train_types:
-            paths = "./analAI/%s/%s" % (train_type + "save", self.coinname)
+            paths = ".%s%s/%s" % (ROOT_MODEL,train_type + "save", self.coinname)
             model_list = [f for f in os.listdir(paths) if re.match(f'.+{self.timestepstr}_{self.name_req_time if self.name_req_time is not None else self.req_time}.+\.keras', f)]
             # print(model_list)
             load_model = None
@@ -307,7 +316,7 @@ class UserService():
             if type(req_time) == int:
                 name_req_time = "mins" + str(req_time)
             print("예측을 시작합니다.")
-            paths = "./analAI/%s/%s" % (train_type + "save", coinname)
+            paths = ".%s%s/%s" % (ROOT_MODEL,train_type + "save", coinname)
             model_list = [f for f in os.listdir(paths) if re.match(f'.+{timestepstr}_{name_req_time if name_req_time is not None else req_time}.+\.keras', f)]
             # print(model_list)
             if len(model_list):#pass
@@ -330,11 +339,7 @@ class UserService():
         if self.ownData is None:
             data_sets, target_name,_ = receive_data(target_name=coinname, req_time=req_time,
                                                   getcnt=pred_timestep+6)
-            print(target_name, ":수신데이터수량:", len(data_sets))
-            print(data_sets[-1])
-
             preprocessed_sets,raw_datasets = preData(data_sets, coinname)
-            print(target_name, "데이터 전처리가 완료됨")
             x_data, y_data,y_raw = split_xyData(preprocessed_sets,raw_datasets, step=timestepstr)
             #사용자 데이터 예측
             x_user = np.concatenate((x_data[-1][1:],np.array([y_data[-1]])))
@@ -344,7 +349,6 @@ class UserService():
             x_data = self.ownData["x_data"]
             y_data = self.ownData["y_data"]
             y_raw = self.ownData["y_raw"]
-        print(coinname, "데이터 전처리가 완료됨")
         ret_text=""
         if load_model:
             tolerance = 0.01 # 2% 오차율
@@ -354,7 +358,7 @@ class UserService():
             acc_calgap[acc_calgap<tolerance]=0
             acc_mean = acc_calgap.mean(axis=0)
             ret_dict = {"pv":round(acc_mean.mean(),2).astype("float")}
-            ret_text+=f"현재 모델의 ± 1% 유의수준 정확률 {acc_mean.mean():.2%}\n"
+            ret_text+=f"현재 모델의 ± 1% 유의수준 정확률 {1-abs(acc_mean.mean()):.2%}\n"
             pred_avgrat = (y_pred / y_raw - 1).mean(axis=0)
             user_pred = load_model.predict(np.array([x_user]))
             # print(y_pred.shape)
@@ -389,11 +393,9 @@ class UserService():
         return ret_text,ret_dict;
 def web_service(coinname,timestep_str,modeltype,req_time):#coinname 이름 timestep_str="middle",
     # 4. ======== 사용자 예측값 출력
-    print("호출 ===")
     user = UserService()
     # useage user.pred_service(coinname="BTC",train_type="lstm"|"conv",timestepstr="middle",req_time=60|"days")
     _,ret_dict = user.pred_service(coinname=coinname,train_type=modeltype,timestepstr=timestep_str,req_time=req_time)
-
     return ret_dict
 import ftplib
 def sendFtp():
@@ -405,6 +407,7 @@ def sendFtp():
     #     session.storbinary('STOR ' + '/img/CodingMooMin.jpg', fp)  # 파일 업로드
     # session.quit()  # 서버 나가기
     # print('파일전송함')
+
 if "__main__"==__name__:
     # # learnner
     # # createModel_conv,createModel_lstm,createCallback
@@ -511,3 +514,24 @@ if "__main__"==__name__:
     # 웹 서비스 구현
     res = web_service("BTC", "middle", "conv", 60)  # coinname 이름 timestep_str="middle",
     print(res)
+    # ------------- 훈련전용
+    names_arr = [list(names.keys())]
+    GETCNT = 500
+    # time_steps = ["short","middle","long","llong"]
+    time_steps = ["long", "llong"]
+    # req_times = [60, 240,"days","months"]
+    req_times = [60, 240, "days", "months"]
+    train_cnt = 0
+    total_count = 1 * len(req_times) * len(time_steps)
+    for cname in names_arr[0]:
+        for time_step in time_steps:
+            for req in req_times:
+                train_cnt += 1
+                print(
+                    f"------------------------------------------------------------ {train_cnt} / {total_count} 진행율 {train_cnt / total_count:.1%}")
+                # middle 60 (conv lstm)
+                if req == "months" and time_step == "llong": continue
+                t_admin = ConfingData(coinname=cname, timestepstr=time_step, req_time=req)
+                t_models = {"conv": createModel_conv(time_step), "lstm": createModel_lstm(time_step)}
+                tcbs = createCallback(cname)
+                t_admin.init_train(smodels=t_models, cbs=tcbs, epoch=500, batsize=None)

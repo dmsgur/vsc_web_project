@@ -43,8 +43,8 @@ def getHtml(pagename):
         return render_template(r"/front/{}.html".format(pagename),titles=titles)
     return ""
 
-
 # 모델 분석 출력
+
 @app.route("/analize/<kind>",methods=["post"])
 def analizeAi(kind):
     #모델 경로 루트로 변경
